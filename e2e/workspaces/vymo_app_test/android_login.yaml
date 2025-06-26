@@ -1,0 +1,10 @@
+appId: com.getvymo.android.debug
+---
+- launchApp:
+    clearState: true
+- tapOn: Email Format / Invite Code
+- inputText: jointsales@agency.com
+- tapOn: Next
+- tapOn: Password
+- inputText: vymo2013
+- tapOn: Login
