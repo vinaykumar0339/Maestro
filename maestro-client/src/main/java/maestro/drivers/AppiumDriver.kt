@@ -22,7 +22,7 @@ import java.time.Duration
 class AppiumDriver(
     private val maestroAppiumDriver: MaestroAppiumDriver = MaestroAppiumDriver(),
     private val deviceId: String,
-    private val capabilities: Map<String, Any>,
+    private var capabilities: Map<String, Any>,
     private val metricsProvider: Metrics = MetricsProvider.getInstance(),
 ): Driver {
 
@@ -44,28 +44,21 @@ class AppiumDriver(
     override fun close() {
         metrics.measured("close") {
             // stop the appium server.
-//            maestroAppiumDriver.getDriver().quit()
-//            maestroAppiumDriver.stopServer()
+            maestroAppiumDriver.getDriver().quit()
+            maestroAppiumDriver.stopServer()
         }
     }
 
     override fun deviceInfo(): DeviceInfo {
         return metrics.measured("deviceInfo") {
             // Get device information using Appium
-//            val windowRect = maestroAppiumDriver.getWindowRect()
-//            return@measured DeviceInfo(
-//                platform = if (maestroAppiumDriver.isAndroid()) Platform.ANDROID else Platform.IOS,
-//                widthPixels = windowRect.size.width,
-//                heightPixels = windowRect.size.height,
-//                widthGrid = windowRect.size.width,
-//                heightGrid = windowRect.size.height,
-//            )
+            val windowRect = maestroAppiumDriver.getWindowRect()
             return@measured DeviceInfo(
-                platform = Platform.ANDROID,
-                widthPixels = 1080,
-                heightPixels = 1920,
-                widthGrid = 1080,
-                heightGrid = 1920,
+                platform = if (maestroAppiumDriver.isAndroid()) Platform.ANDROID else Platform.IOS,
+                widthPixels = windowRect.size.width,
+                heightPixels = windowRect.size.height,
+                widthGrid = windowRect.size.width,
+                heightGrid = windowRect.size.height,
             )
         }
     }
@@ -91,7 +84,12 @@ class AppiumDriver(
     }
 
     override fun clearAppState(appId: String) {
-
+        metrics.measured("operation", mapOf("command" to "clearAppState", "appId" to appId)) {
+            // Update the capability by setting noReset = true
+            val updatedCapabilities = capabilities.toMutableMap()
+            updatedCapabilities["noReset"] = true
+            capabilities = updatedCapabilities
+        }
     }
 
     override fun clearKeychain() {
