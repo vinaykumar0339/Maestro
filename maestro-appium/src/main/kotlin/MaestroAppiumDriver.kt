@@ -6,6 +6,10 @@ import io.appium.java_client.ios.IOSDriver
 import io.appium.java_client.remote.options.BaseOptions
 import io.appium.java_client.service.local.AppiumDriverLocalService
 import io.appium.java_client.service.local.AppiumServerHasNotBeenStartedLocallyException
+import io.appium.java_client.service.local.AppiumServiceBuilder
+import io.appium.java_client.service.local.flags.GeneralServerFlag
+import net.bytebuddy.build.Plugin.Engine.Target.Sink
+import org.openqa.selenium.Platform
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.interactions.Pause
 import org.openqa.selenium.interactions.PointerInput
@@ -23,7 +27,14 @@ class MaestroAppiumDriver {
         // Logic to start the Appium server
         // This is a placeholder; actual implementation will depend on your setup
         println("Starting Appium server...")
-        appiumService = AppiumDriverLocalService.buildDefaultService()
+        val appiumServiceBuilder = AppiumServiceBuilder()
+        appiumServiceBuilder
+            .usingAnyFreePort()
+            .withArgument(
+                GeneralServerFlag.LOG_LEVEL,
+                "error" // Set the log level to error to reduce noise in logs
+            )
+        appiumService = AppiumDriverLocalService.buildService(appiumServiceBuilder)
 
         try {
             appiumService?.start()
@@ -81,11 +92,56 @@ class MaestroAppiumDriver {
         }
     }
 
+    fun takeScreenshot(): ByteArray {
+        if (appiumDriver == null) {
+            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
+        }
+
+        // Logic to take a screenshot
+        println("Taking screenshot...")
+        return  appiumDriver!!.getScreenshotAs(org.openqa.selenium.OutputType.BYTES)
+    }
+
     fun getDriver(): AppiumDriver {
         if (appiumDriver == null) {
             throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
         }
         return appiumDriver!!
+    }
+
+    fun quit() {
+        if (appiumDriver == null) {
+            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
+        }
+
+        // Logic to quit the Appium driver
+        println("Quitting Appium driver...")
+        appiumDriver!!.quit()
+        appiumDriver = null
+    }
+
+    fun hideKeyboard() {
+        if (appiumDriver == null) {
+            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
+        }
+
+        // Logic to hide the keyboard
+        println("Hiding keyboard...")
+        when (appiumDriver) {
+            is AndroidDriver -> {
+                val androidDriver = appiumDriver as AndroidDriver
+                androidDriver.hideKeyboard()
+            }
+
+            is IOSDriver -> {
+                val iosDriver = appiumDriver as IOSDriver
+                iosDriver.hideKeyboard()
+            }
+
+            else -> {
+                throw IllegalStateException("Unsupported driver type: ${appiumDriver?.javaClass?.name}")
+            }
+        }
     }
 
     fun createDriver(
@@ -96,13 +152,25 @@ class MaestroAppiumDriver {
         }
 
         val options = getCapabilitiesOptions(capabilities)
-        appiumDriver = AppiumDriver(appiumService!!.url, options)
+        appiumDriver = when (options.platformName) {
+            Platform.ANDROID -> {
+                AndroidDriver(appiumService!!.url, options)
+            }
+
+            Platform.IOS -> {
+                IOSDriver(appiumService!!.url, options)
+            }
+
+            else -> {
+                throw IllegalArgumentException("Unsupported platform: ${options.platformName}")
+            }
+        }
 
         return appiumDriver!!
     }
 
     // TODO: need to convert this xml string into a proper
-    fun getPageSource() : String? {
+    private fun getPageSource() : String? {
         if (appiumDriver == null) {
             throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
         }
@@ -176,6 +244,22 @@ class MaestroAppiumDriver {
         println("Inputting text: $text")
         val activeElement = appiumDriver!!.switchTo().activeElement()
         activeElement.sendKeys(text)
+    }
+
+    fun clearText(charactersToErase: Int) {
+        if (appiumDriver == null) {
+            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
+        }
+
+        // Logic to clear text from the active element
+        println("Clearing text from active element, erasing $charactersToErase characters")
+        val activeElement = appiumDriver!!.switchTo().activeElement()
+        val currentText = activeElement.text
+        if (currentText.isNotEmpty()) {
+            val newText = currentText.dropLast(charactersToErase)
+            activeElement.clear()
+            activeElement.sendKeys(newText)
+        }
     }
 
     fun scroll(

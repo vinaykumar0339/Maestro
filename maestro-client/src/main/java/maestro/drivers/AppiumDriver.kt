@@ -13,7 +13,9 @@ import maestro.TreeNode
 import maestro.ViewHierarchy
 import maestro.utils.Metrics
 import maestro.utils.MetricsProvider
+import maestro.utils.ScreenshotUtils
 import okio.Sink
+import okio.buffer
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.File
@@ -44,7 +46,7 @@ class AppiumDriver(
     override fun close() {
         metrics.measured("close") {
             // stop the appium server.
-            maestroAppiumDriver.getDriver().quit()
+            maestroAppiumDriver.quit()
             maestroAppiumDriver.stopServer()
         }
     }
@@ -235,7 +237,7 @@ class AppiumDriver(
 
     override fun inputText(text: String) {
         metrics.measured("operation", mapOf("command" to "inputText")) {
-            maestroAppiumDriver
+            maestroAppiumDriver.inputText(text)
         }
     }
 
@@ -244,11 +246,17 @@ class AppiumDriver(
     }
 
     override fun hideKeyboard() {
-        TODO("Not yet implemented")
+        maestroAppiumDriver.hideKeyboard()
     }
 
     override fun takeScreenshot(out: Sink, compressed: Boolean) {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "takeScreenshot")) {
+            // Take a screenshot using Appium
+            val screenshot = maestroAppiumDriver.takeScreenshot()
+            out.buffer().use {
+                it.write(screenshot)
+            }
+        }
     }
 
     override fun startScreenRecording(out: Sink): ScreenRecording {
@@ -260,7 +268,10 @@ class AppiumDriver(
     }
 
     override fun eraseText(charactersToErase: Int) {
-        TODO("Not yet implemented")
+        // send backspace key for the number of characters to erase
+        metrics.measured("operation", mapOf("command" to "eraseText", "charactersToErase" to charactersToErase.toString())) {
+            maestroAppiumDriver.clearText(charactersToErase)
+        }
     }
 
     override fun setProxy(host: String, port: Int) {
@@ -279,19 +290,22 @@ class AppiumDriver(
     }
 
     override fun isUnicodeInputSupported(): Boolean {
-        TODO("Not yet implemented")
+        return !maestroAppiumDriver.isAndroid()
     }
 
     override fun waitUntilScreenIsStatic(timeoutMs: Long): Boolean {
-        TODO("Not yet implemented")
+        return metrics.measured("operation", mapOf("command" to "waitUntilScreenIsStatic", "timeoutMs" to timeoutMs.toString())) {
+            ScreenshotUtils.waitUntilScreenIsStatic(timeoutMs, SCREENSHOT_DIFF_THRESHOLD, this)
+        }
     }
 
     override fun waitForAppToSettle(initialHierarchy: ViewHierarchy?, appId: String?, timeoutMs: Int?): ViewHierarchy? {
-        TODO("Not yet implemented")
+        return ScreenshotUtils.waitForAppToSettle(initialHierarchy, this, timeoutMs)
     }
 
     override fun capabilities(): List<Capability> {
-        TODO("Not yet implemented")
+        return maestroAppiumDriver.isAndroid()
+            .let { if (it) listOf(Capability.FAST_HIERARCHY) else emptyList() }
     }
 
     override fun setPermissions(appId: String, permissions: Map<String, String>) {
@@ -308,6 +322,10 @@ class AppiumDriver(
 
     override fun setAirplaneMode(enabled: Boolean) {
         TODO("Not yet implemented")
+    }
+
+    companion object {
+        private const val SCREENSHOT_DIFF_THRESHOLD = 0.005
     }
 
 }

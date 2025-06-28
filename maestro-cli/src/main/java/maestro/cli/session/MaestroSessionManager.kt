@@ -35,6 +35,7 @@ import maestro.device.Platform
 import maestro.utils.CliInsights
 import maestro.cli.util.ScreenReporter
 import maestro.drivers.AndroidDriver
+import maestro.drivers.AppiumDriver
 import maestro.drivers.IOSDriver
 import maestro.orchestra.WorkspaceConfig.PlatformConfiguration
 import maestro.orchestra.workspace.WorkspaceExecutionPlanner
@@ -200,10 +201,27 @@ object MaestroSessionManager {
         return when {
             selectedDevice.device != null -> MaestroSession(
                 maestro = when (selectedDevice.device.platform) {
-                    Platform.ANDROID -> createAndroid(
-                        selectedDevice.device.instanceId,
-                        !connectToExistingSession,
-                        driverHostPort,
+//                    Platform.ANDROID -> createAndroid(
+//                        selectedDevice.device.instanceId,
+//                        !connectToExistingSession,
+//                        driverHostPort,
+//                    )
+
+                    Platform.ANDROID -> Maestro.android(
+                        driver = AppiumDriver(
+                            deviceId = selectedDevice.device.instanceId,
+                            capabilities = mapOf(
+                                "platformName" to "Android",
+                                "deviceName" to selectedDevice.device.instanceId,
+                                "udid" to selectedDevice.device.instanceId,
+                                "automationName" to "UiAutomator2",
+                                "noReset" to false,
+                                "appium:appActivity" to "in.vymo.android.base.splashRoute.SplashRouterActivity",
+                                "appium:appPackage" to "com.getvymo.android.debug",
+                                "logLevel" to "OFF",
+                            )
+                        ),
+                        openDriver = true
                     )
 
                     Platform.IOS -> createIOS(
