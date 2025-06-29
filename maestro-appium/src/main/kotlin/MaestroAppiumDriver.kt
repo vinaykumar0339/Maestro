@@ -83,14 +83,8 @@ class MaestroAppiumDriver {
     }
 
     fun launchApp(appId: String) {
-        return handleDriverCommand<AppiumDriver, InteractsWithApps, Unit>(
-            driver = appiumDriver,
-            interfaceHandler = {
-                if (!isAppForeground(appId)) {
-                    it.activateApp(appId)
-                }
-            }
-        )
+        // no need to do anything create Driver should automatically open the app.
+        // Make sure stopApp is false from the yaml files.
     }
 
     fun terminateApp(appId: String) {
