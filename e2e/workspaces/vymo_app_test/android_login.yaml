@@ -1,10 +1,13 @@
 appId: com.getvymo.android.debug
 ---
 - launchApp:
-    clearState: true
+    stopApp: false
 - tapOn: Email Format / Invite Code
 - inputText: jointsales@agency.com
 - tapOn: Next
 - tapOn: Password
 - inputText: vymo2013
 - tapOn: Login
+- tapOn:
+      id: appium_date_edit_field
+- inputText: "1751228741068"
