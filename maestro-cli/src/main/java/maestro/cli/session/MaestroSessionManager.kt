@@ -218,7 +218,8 @@ object MaestroSessionManager {
                                 "noReset" to false,
                                 "appium:appActivity" to "in.vymo.android.base.splashRoute.SplashRouterActivity",
                                 "appium:appPackage" to "com.getvymo.android.debug",
-                                "logLevel" to "OFF",
+                                "appium:optionalIntentArguments" to "-e appiumTest true",
+                                "appium:autoGrantPermissions" to true
                             )
                         ),
                         openDriver = true

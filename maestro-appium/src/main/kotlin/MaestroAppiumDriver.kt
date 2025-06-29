@@ -1,14 +1,16 @@
 package com.getvymo.appium
 
 import io.appium.java_client.AppiumDriver
+import io.appium.java_client.HidesKeyboard
+import io.appium.java_client.InteractsWithApps
 import io.appium.java_client.android.AndroidDriver
+import io.appium.java_client.appmanagement.ApplicationState
 import io.appium.java_client.ios.IOSDriver
 import io.appium.java_client.remote.options.BaseOptions
 import io.appium.java_client.service.local.AppiumDriverLocalService
 import io.appium.java_client.service.local.AppiumServerHasNotBeenStartedLocallyException
 import io.appium.java_client.service.local.AppiumServiceBuilder
 import io.appium.java_client.service.local.flags.GeneralServerFlag
-import net.bytebuddy.build.Plugin.Engine.Target.Sink
 import org.openqa.selenium.Platform
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.interactions.Pause
@@ -48,100 +50,95 @@ class MaestroAppiumDriver {
 
     }
 
-    fun launchApp(appId: String) {
-        if (appiumDriver == null) {
+    private inline fun <reified T : AppiumDriver?, reified I : Any?, R> handleDriverCommand(
+        driver: T?,
+        noinline androidHandler: ((AndroidDriver) -> R)? = null,
+        noinline iosHandler: ((IOSDriver) -> R)? = null,
+        noinline interfaceHandler: ((I) -> R)? = null,
+        noinline handler: ((T) -> R)? = null
+    ): R {
+        if (driver == null) {
             throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
         }
 
-        when (appiumDriver) {
-            is AndroidDriver -> {
-                val androidDriver = appiumDriver as AndroidDriver
-                androidDriver.activateApp(appId)
-            }
-
-            is IOSDriver -> {
-                val iosDriver = appiumDriver as IOSDriver
-                iosDriver.activateApp(appId)
-            }
-
-            else -> {
-                throw IllegalStateException("Unsupported driver type: ${appiumDriver?.javaClass?.name}")
-            }
+        return when {
+            driver is AndroidDriver && androidHandler != null -> androidHandler(driver)
+            driver is IOSDriver && iosHandler != null -> iosHandler(driver)
+            handler != null -> handler(driver)
+            driver is I && interfaceHandler != null -> interfaceHandler(driver)
+            else -> throw IllegalStateException("Unsupported driver type: ${driver.javaClass.name}")
         }
+    }
+
+
+
+    private fun isAppForeground(appId: String): Boolean {
+        return handleDriverCommand<AppiumDriver, InteractsWithApps, Boolean>(
+            driver = appiumDriver,
+            interfaceHandler = {
+                val appState = it.queryAppState(appId)
+                appState == ApplicationState.RUNNING_IN_FOREGROUND
+            }
+        )
+    }
+
+    fun launchApp(appId: String) {
+        return handleDriverCommand<AppiumDriver, InteractsWithApps, Unit>(
+            driver = appiumDriver,
+            interfaceHandler = {
+                if (!isAppForeground(appId)) {
+                    it.activateApp(appId)
+                }
+            }
+        )
     }
 
     fun terminateApp(appId: String) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        when (appiumDriver) {
-            is AndroidDriver -> {
-                val androidDriver = appiumDriver as AndroidDriver
-                androidDriver.terminateApp(appId)
+        return handleDriverCommand<AppiumDriver, InteractsWithApps, Unit>(
+            driver = appiumDriver,
+            interfaceHandler = {
+                if (isAppForeground(appId)) {
+                    it.terminateApp(appId)
+                }
             }
-
-            is IOSDriver -> {
-                val iosDriver = appiumDriver as IOSDriver
-                iosDriver.terminateApp(appId)
-            }
-
-            else -> {
-                throw IllegalStateException("Unsupported driver type: ${appiumDriver?.javaClass?.name}")
-            }
-        }
+        )
     }
 
     fun takeScreenshot(): ByteArray {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to take a screenshot
-        println("Taking screenshot...")
-        return  appiumDriver!!.getScreenshotAs(org.openqa.selenium.OutputType.BYTES)
+        return handleDriverCommand<AppiumDriver, Any, ByteArray>(
+            driver = appiumDriver,
+            handler = { it.getScreenshotAs(org.openqa.selenium.OutputType.BYTES) }
+        )
     }
 
-    fun getDriver(): AppiumDriver {
+    private fun getDriver(): AppiumDriver {
         if (appiumDriver == null) {
             throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
         }
         return appiumDriver!!
     }
 
-    fun quit() {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to quit the Appium driver
-        println("Quitting Appium driver...")
-        appiumDriver!!.quit()
+    private fun resetDriver() {
+        println("Resetting Appium driver...")
         appiumDriver = null
     }
 
+    fun quit() {
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            handler = { it.quit() }
+        ).also {
+            resetDriver()
+        }
+    }
+
     fun hideKeyboard() {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to hide the keyboard
-        println("Hiding keyboard...")
-        when (appiumDriver) {
-            is AndroidDriver -> {
-                val androidDriver = appiumDriver as AndroidDriver
-                androidDriver.hideKeyboard()
+        return handleDriverCommand<AppiumDriver, HidesKeyboard, Unit>(
+            driver = appiumDriver,
+            interfaceHandler = {
+                it.hideKeyboard()
             }
-
-            is IOSDriver -> {
-                val iosDriver = appiumDriver as IOSDriver
-                iosDriver.hideKeyboard()
-            }
-
-            else -> {
-                throw IllegalStateException("Unsupported driver type: ${appiumDriver?.javaClass?.name}")
-            }
-        }
+        )
     }
 
     fun createDriver(
@@ -169,34 +166,29 @@ class MaestroAppiumDriver {
         return appiumDriver!!
     }
 
-    // TODO: need to convert this xml string into a proper
     private fun getPageSource() : String? {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        return appiumDriver!!.pageSource
+        return handleDriverCommand<AppiumDriver, Any, String?>(
+            driver = appiumDriver,
+            handler = { it.pageSource }
+        )
     }
 
     fun tap(
         x: Int,
         y: Int,
     ) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            appiumDriver,
+            handler = {
+                val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
+                val tap = Sequence(pointerInput, 1)
 
-        // Logic to perform tap action
-        println("Performing tap action...")
-        // Example: appiumDriver!!.tap(1, 100, 200, 500)
-        val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
-        val tap = Sequence(pointerInput, 1)
-
-        tap.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, y))
-        tap.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
-        tap.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
-
-        appiumDriver!!.perform(listOf(tap))
+                tap.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, y))
+                tap.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+                tap.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
+                it.perform(listOf(tap))
+            }
+        )
 
     }
 
@@ -205,27 +197,22 @@ class MaestroAppiumDriver {
         y: Int,
         duration: Duration = Duration.ofMillis(1000)
     ) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            appiumDriver,
+            handler = {
+                val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
+                val tap = Sequence(pointerInput, 1)
 
-        // Logic to perform tap action
-        println("Performing tap action...")
-        // Example: appiumDriver!!.tap(1, 100, 200, 500)
-        val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
-        val tap = Sequence(pointerInput, 1)
-
-        tap.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, y))
-        tap.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
-        tap.addAction(Pause(pointerInput, duration))
-        tap.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
-
-        appiumDriver!!.perform(listOf(tap))
+                tap.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, y))
+                tap.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+                tap.addAction(Pause(pointerInput, duration))
+                tap.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
+                it.perform(listOf(tap))
+            }
+        )
     }
 
     fun getDocumentViewHierarchy(): Document {
-        // Logic to get view hierarchy
-        println("Retrieving view hierarchy...")
         val pageSource = getPageSource()
         if (pageSource.isNullOrEmpty()) {
             throw IllegalStateException("Page source is empty. Ensure the app is running and the driver is connected.")
@@ -236,30 +223,25 @@ class MaestroAppiumDriver {
     }
 
     fun inputText(text: String) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to input text
-        println("Inputting text: $text")
-        val activeElement = appiumDriver!!.switchTo().activeElement()
-        activeElement.sendKeys(text)
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            handler = { it.switchTo().activeElement().sendKeys(text) }
+        )
     }
 
     fun clearText(charactersToErase: Int) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to clear text from the active element
-        println("Clearing text from active element, erasing $charactersToErase characters")
-        val activeElement = appiumDriver!!.switchTo().activeElement()
-        val currentText = activeElement.text
-        if (currentText.isNotEmpty()) {
-            val newText = currentText.dropLast(charactersToErase)
-            activeElement.clear()
-            activeElement.sendKeys(newText)
-        }
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            handler = {
+                val activeElement = it.switchTo().activeElement()
+                val currentText = activeElement.text
+                if (currentText.isNotEmpty()) {
+                    val newText = currentText.dropLast(charactersToErase)
+                    activeElement.clear()
+                    activeElement.sendKeys(newText)
+                }
+            }
+        )
     }
 
     fun scroll(
@@ -269,46 +251,40 @@ class MaestroAppiumDriver {
         endY: Int,
         duration: Duration = Duration.ofMillis(500)
     ) {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            handler = {
+                val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
+                val scroll = Sequence(pointerInput, 1)
 
-        // Logic to perform scroll action
-        println("Performing scroll action...")
-        val pointerInput = PointerInput(PointerInput.Kind.TOUCH, "finger")
-        val scroll = Sequence(pointerInput, 1)
-
-        scroll.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY))
-        scroll.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
-        scroll.addAction(pointerInput.createPointerMove(duration, PointerInput.Origin.viewport(), endX, endY))
-        scroll.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
-
-        appiumDriver!!.perform(listOf(scroll))
+                scroll.addAction(pointerInput.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY))
+                scroll.addAction(pointerInput.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+                scroll.addAction(pointerInput.createPointerMove(duration, PointerInput.Origin.viewport(), endX, endY))
+                scroll.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
+                it.perform(listOf(scroll))
+            }
+        )
     }
 
     fun stopServer() {
         // Logic to stop the Appium server
         println("Stopping Appium server...")
         appiumService?.stop()
+        appiumService = null
     }
 
     fun getWindowRect(): WebDriver.Window {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        // Logic to get window rectangle
-        println("Retrieving window rectangle...")
-        val windowRect = appiumDriver!!.manage().window()
-        return windowRect
+        return handleDriverCommand<AppiumDriver, Any, WebDriver.Window>(
+            driver = appiumDriver,
+            handler = { it.manage().window() }
+        )
     }
 
     fun isAndroid(): Boolean {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-
-        return appiumDriver is AndroidDriver
+        return handleDriverCommand<AppiumDriver, Any, Boolean> (
+            driver = appiumDriver,
+            handler = { it is AndroidDriver }
+        )
     }
 
     private fun getCapabilitiesOptions(

@@ -3,9 +3,6 @@ appId: com.getvymo.android.debug
 - launchApp:
     clearState: true
 - tapOn: Email Format / Invite Code
-- hideKeyboard
-- inputText: jointsales@agency.com
-- eraseText
 - inputText: jointsales@agency.com
 - tapOn: Next
 - tapOn: Password
