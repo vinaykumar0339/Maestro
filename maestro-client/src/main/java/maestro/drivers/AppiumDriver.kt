@@ -87,9 +87,9 @@ class AppiumDriver(
 
     override fun clearAppState(appId: String) {
         metrics.measured("operation", mapOf("command" to "clearAppState", "appId" to appId)) {
-            // Update the capability by setting noReset = true
+            // Update the capability by setting noReset = false
             val updatedCapabilities = capabilities.toMutableMap()
-            updatedCapabilities["noReset"] = true
+            updatedCapabilities["noReset"] = false
             capabilities = updatedCapabilities
         }
     }
@@ -118,17 +118,31 @@ class AppiumDriver(
         val attributes = if (node is Element) {
             val attributesBuilder = mutableMapOf<String, String>()
 
+            // text attribute
             if (node.hasAttribute("text")) {
                 val text = node.getAttribute("text")
                 attributesBuilder["text"] = text
             }
 
-            if (node.hasAttribute("content-desc")) {
-                attributesBuilder["accessibilityText"] = node.getAttribute("content-desc")
+            if (node.hasAttribute("value")) {
+                val value = node.getAttribute("value")
+                if (value.isNotEmpty()) {
+                    attributesBuilder["text"] = value
+                }
             }
 
+            // accessibilityText attribute
+            if (node.hasAttribute("content-desc")) {
+                attributesBuilder["accessibilityText"] = node.getAttribute("content-desc")
+            } else if (node.hasAttribute("label")) {
+                attributesBuilder["accessibilityText"] = node.getAttribute("label")
+            }
+
+            // hintText attribute
             if (node.hasAttribute("hintText")) {
                 attributesBuilder["hintText"] = node.getAttribute("hintText")
+            } else if (node.hasAttribute("placeholderValue")) {
+                attributesBuilder["hintText"] = node.getAttribute("placeholderValue")
             }
 
             if (node.hasAttribute("class") && node.getAttribute("class") == "android.widget.Toast") {
@@ -137,8 +151,11 @@ class AppiumDriver(
                 attributesBuilder["ignoreBoundsFiltering"] = false.toString()
             }
 
+            // id attribute
             if (node.hasAttribute("resource-id")) {
                 attributesBuilder["resource-id"] = node.getAttribute("resource-id")
+            } else if (node.hasAttribute("name") || node.hasAttribute("identifier")) {
+                attributesBuilder["resource-id"] = node.getAttribute("name") ?: node.getAttribute("identifier")
             }
 
             if (node.hasAttribute("clickable")) {
@@ -147,6 +164,20 @@ class AppiumDriver(
 
             if (node.hasAttribute("bounds")) {
                 attributesBuilder["bounds"] = node.getAttribute("bounds")
+            } else {
+                // from appium we get x, y, width, height attributes for ios, so we need to construct bounds from them
+                val x = node.hasAttribute("x") && node.getAttribute("x").isNotEmpty()
+                val y = node.hasAttribute("y") && node.getAttribute("y").isNotEmpty()
+                val width = node.hasAttribute("width") && node.getAttribute("width").isNotEmpty()
+                val height = node.hasAttribute("height") && node.getAttribute("height").isNotEmpty()
+
+                if (x && y && width && height) {
+                    val xInt = node.getAttribute("x").toIntOrNull() ?: 0
+                    val yInt = node.getAttribute("y").toIntOrNull() ?: 0
+                    val widthInt = node.getAttribute("width").toIntOrNull() ?: 0
+                    val heightInt = node.getAttribute("height").toIntOrNull() ?: 0
+                    attributesBuilder["bounds"] = "[${xInt},${yInt},${xInt + widthInt},${yInt + heightInt}]"
+                }
             }
 
             if (node.hasAttribute("enabled")) {
