@@ -16,6 +16,7 @@ data class WorkspaceConfig(
         android = PlatformConfiguration.AndroidConfiguration(disableAnimations = false),
         ios = PlatformConfiguration.IOSConfiguration(disableAnimations = false)
     ),
+    val appiumConfiguration: AppiumConfiguration? = null
 ) {
 
     data class MaestroNotificationConfiguration(
@@ -49,6 +50,10 @@ data class WorkspaceConfig(
             val snapshotKeyHonorModalViews: Boolean? = null,
         )
     }
+
+    data class AppiumConfiguration(
+        val capabilities: Map<String, Any> = emptyMap(),
+    )
 
     @JsonAnySetter
     fun setOtherField(key: String, other: Any?) {

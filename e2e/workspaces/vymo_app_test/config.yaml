@@ -1,0 +1,19 @@
+# Platform Configuration
+platform:
+  ios:
+    snapshotKeyHonorModalViews: false
+    disableAnimations: true
+  android:
+    disableAnimations: true
+
+# Appium Configuration
+appiumConfiguration:
+  capabilities:
+    platformName: Android
+    udid: emulator-5554
+    automationName: UiAutomator2
+    noReset: false
+    appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
+    appium:appPackage: com.getvymo.android.debug
+    appium:optionalIntentArguments: -e appiumTest true
+    appium:autoGrantPermissions: true

@@ -188,6 +188,13 @@ class TestCommand : Callable<Int> {
     )
     private var appleTeamId: String? = null
 
+    @Option(
+        names = ["--appium"],
+        description = ["Use Appium to run the tests. This is useful for running tests on real devices or when you need advanced Appium features."],
+        hidden = true
+    )
+    private var appium: Boolean = false
+
     @CommandLine.Spec
     lateinit var commandSpec: CommandLine.Model.CommandSpec
 
@@ -348,7 +355,8 @@ class TestCommand : Callable<Int> {
             platform = parent?.platform,
             isHeadless = headless,
             reinstallDriver = reinstallDriver,
-            executionPlan = executionPlan
+            executionPlan = executionPlan,
+            appiumTests = appium,
         ) { session ->
             val maestro = session.maestro
             val device = session.device

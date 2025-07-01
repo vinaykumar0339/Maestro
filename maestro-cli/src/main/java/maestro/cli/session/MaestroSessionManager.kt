@@ -37,6 +37,7 @@ import maestro.cli.util.ScreenReporter
 import maestro.drivers.AndroidDriver
 import maestro.drivers.AppiumDriver
 import maestro.drivers.IOSDriver
+import maestro.orchestra.WorkspaceConfig
 import maestro.orchestra.WorkspaceConfig.PlatformConfiguration
 import maestro.orchestra.workspace.WorkspaceExecutionPlanner
 import org.slf4j.LoggerFactory
@@ -62,20 +63,18 @@ object MaestroSessionManager {
     private val executor = Executors.newScheduledThreadPool(1)
     private val logger = LoggerFactory.getLogger(MaestroSessionManager::class.java)
 
-
-    fun <T> newSession(
-        host: String?,
-        port: Int?,
-        driverHostPort: Int?,
-        deviceId: String?,
-        teamId: String? = null,
-        platform: String? = null,
-        isStudio: Boolean = false,
-        isHeadless: Boolean = isStudio,
-        reinstallDriver: Boolean = true,
-        deviceIndex: Int? = null,
-        executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
-        block: (MaestroSession) -> T,
+    private fun <T> handleSessionForNativeMaestro(host: String?,
+                                              port: Int?,
+                                              driverHostPort: Int?,
+                                              deviceId: String?,
+                                              teamId: String? = null,
+                                              platform: String? = null,
+                                              isStudio: Boolean = false,
+                                              isHeadless: Boolean = isStudio,
+                                              reinstallDriver: Boolean = true,
+                                              deviceIndex: Int? = null,
+                                              executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
+                                              block: (MaestroSession) -> T,
     ): T {
         val selectedDevice = selectDevice(
             host = host,
@@ -128,6 +127,79 @@ object MaestroSessionManager {
         })
 
         return block(session)
+    }
+
+    private fun <T> handleSessionForAppiumMaestro(
+        appiumConfiguration: WorkspaceConfig.AppiumConfiguration,
+        block: (MaestroSession) -> T
+    ): T {
+
+        val deviceId = (appiumConfiguration.capabilities["udid"]
+            ?: appiumConfiguration.capabilities["appium:udid"]
+            ?: appiumConfiguration.capabilities["deviceName"]
+            ?: "") as String
+        val maestro = Maestro.android(
+            driver = AppiumDriver(
+                deviceId = deviceId,
+                capabilities = appiumConfiguration.capabilities
+            ),
+            openDriver = true
+        )
+        val session = MaestroSession(
+            maestro = maestro,
+        )
+
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            runCatching { ScreenReporter.reportMaxDepth() }
+            if (SessionStore.activeSessions().isEmpty()) {
+                session.close()
+            }
+        })
+
+        return block(session)
+    }
+
+
+    fun <T> newSession(
+        host: String?,
+        port: Int?,
+        driverHostPort: Int?,
+        deviceId: String?,
+        teamId: String? = null,
+        platform: String? = null,
+        isStudio: Boolean = false,
+        isHeadless: Boolean = isStudio,
+        reinstallDriver: Boolean = true,
+        deviceIndex: Int? = null,
+        executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
+        appiumTests: Boolean = false,
+        block: (MaestroSession) -> T,
+    ): T {
+        if (appiumTests) {
+            executionPlan?.workspaceConfig?.appiumConfiguration?.let {
+                return handleSessionForAppiumMaestro(
+                    appiumConfiguration = it,
+                    block = block
+                )
+            } ?: run {
+                throw RuntimeException("Appium configuration is required for Appium tests. Please provide a valid Appium configuration in the workspace config.")
+            }
+        } else {
+            return handleSessionForNativeMaestro(
+                host = host,
+                port = port,
+                driverHostPort = driverHostPort,
+                deviceId = deviceId,
+                teamId = teamId,
+                platform = platform,
+                isStudio = isStudio,
+                isHeadless = isHeadless,
+                reinstallDriver = reinstallDriver,
+                deviceIndex = deviceIndex,
+                executionPlan = executionPlan,
+                block = block
+            )
+        }
     }
 
     private fun selectDevice(
@@ -201,28 +273,10 @@ object MaestroSessionManager {
         return when {
             selectedDevice.device != null -> MaestroSession(
                 maestro = when (selectedDevice.device.platform) {
-//                    Platform.ANDROID -> createAndroid(
-//                        selectedDevice.device.instanceId,
-//                        !connectToExistingSession,
-//                        driverHostPort,
-//                    )
-
-                    Platform.ANDROID -> Maestro.android(
-                        driver = AppiumDriver(
-                            deviceId = selectedDevice.device.instanceId,
-                            capabilities = mapOf(
-                                "platformName" to "Android",
-                                "deviceName" to selectedDevice.device.instanceId,
-                                "udid" to selectedDevice.device.instanceId,
-                                "automationName" to "UiAutomator2",
-                                "noReset" to false,
-                                "appium:appActivity" to "in.vymo.android.base.splashRoute.SplashRouterActivity",
-                                "appium:appPackage" to "com.getvymo.android.debug",
-                                "appium:optionalIntentArguments" to "-e appiumTest true",
-                                "appium:autoGrantPermissions" to true
-                            )
-                        ),
-                        openDriver = true
+                    Platform.ANDROID -> createAndroid(
+                        selectedDevice.device.instanceId,
+                        !connectToExistingSession,
+                        driverHostPort,
                     )
 
                     Platform.IOS -> createIOS(
