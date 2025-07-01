@@ -68,7 +68,7 @@ class AppiumDriver(
     override fun launchApp(appId: String, launchArguments: Map<String, Any>) {
         metrics.measured("operation", mapOf("command" to "launchApp", "appId" to appId)) {
             // Launch the app using Appium
-            maestroAppiumDriver.launchApp(appId)
+            maestroAppiumDriver.launchApp(appId, launchArguments, capabilities)
         }
     }
 

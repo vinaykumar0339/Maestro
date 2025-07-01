@@ -13,3 +13,8 @@ appId: com.getvymo.android.debug
 - tapOn:
       id: appium_date_edit_field
 - inputText: "1751228741068"
+- copyTextFrom:
+    id: appium_date_edit_field
+- assertVisible:
+    id: appium_date_edit_field
+    text: "^${maestro.copiedText}$"

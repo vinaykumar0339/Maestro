@@ -82,9 +82,74 @@ class MaestroAppiumDriver {
         )
     }
 
-    fun launchApp(appId: String) {
+    private fun executeScript(script: String, options: Map<String, Any>) {
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            handler = {
+                it.executeScript(script, options)
+            }
+        )
+    }
+
+    private fun launchAndroidApp(appId: String, launchArguments: Map<String, Any> = emptyMap(), capabilities: Map<String, Any> = emptyMap()) {
+        val options = mutableMapOf<String, Any>()
+        options["wait"] = true
+        val appActivity = capabilities["appActivity"] ?: capabilities["appium:appActivity"] as? String
+            ?: throw IllegalArgumentException("appActivity is required for Android app to launch Please check the launchApp Arguments.")
+
+        options["component"] = "$appId/$appActivity"
+
+        val extras = launchArguments.map { (key, value) ->
+            when (value) {
+                is String -> listOf("s", key, value).toTypedArray()
+                is Boolean -> listOf("z", key, value.toString()).toTypedArray()
+                is Int -> listOf("i", key, value.toString()).toTypedArray()
+                is Long -> listOf("l", key, value.toString()).toTypedArray()
+                is Float -> listOf("f", key, value.toString()).toTypedArray()
+                else -> throw IllegalArgumentException("Unsupported type for intent extra: ${value.javaClass.name}")
+            }
+        }.toTypedArray()
+
+        options["extras"] = extras
+
+        return executeScript(
+            script = "mobile: startActivity",
+            options = options
+        )
+
+    }
+
+    private fun launchIOSApp(appId: String, launchArguments: Map<String, Any> = emptyMap()) {
+        val options = mutableMapOf<String, Any>()
+        options["bundleId"] = appId
+
+        val arguments = launchArguments.flatMap {
+            listOf(
+                "-${it.key}",
+                it.value.toString()
+            )
+        }
+        if (arguments.isNotEmpty()) {
+            options["arguments"] = arguments
+        }
+        return executeScript(
+            script = "mobile: launchApp",
+            options = options
+        )
+    }
+
+    fun launchApp(appId: String, launchArguments: Map<String, Any> = emptyMap(), capabilities: Map<String, Any> = emptyMap()) {
         // no need to do anything create Driver should automatically open the app.
         // Make sure stopApp is false from the yaml files.
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            androidHandler = {
+                launchAndroidApp(appId, launchArguments, capabilities)
+            },
+            iosHandler = {
+                launchIOSApp(appId, launchArguments)
+            }
+        )
     }
 
     fun terminateApp(appId: String) {
@@ -137,12 +202,17 @@ class MaestroAppiumDriver {
 
     fun createDriver(
         capabilities: Map<String, Any>,
+        autoLaunch: Boolean = false,
     ): AppiumDriver {
         if (appiumService == null || !appiumService!!.isRunning) {
             throw IllegalStateException("Appium server is not running. Please start the server first.")
         }
 
-        val options = getCapabilitiesOptions(capabilities)
+        val nonAutoLaunchCapabilities = capabilities.toMutableMap().apply {
+            set("autoLaunch", autoLaunch)
+            set("appium:autoLaunch", autoLaunch)
+        }
+        val options = getCapabilitiesOptions(nonAutoLaunchCapabilities)
         appiumDriver = when (options.platformName) {
             Platform.ANDROID -> {
                 AndroidDriver(appiumService!!.url, options)
