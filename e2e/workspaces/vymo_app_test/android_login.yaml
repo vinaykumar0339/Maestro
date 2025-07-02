@@ -10,6 +10,7 @@ appId: com.getvymo.android.debug
 - tapOn: Password
 - inputText: vymo2013
 - tapOn: Login
+- pressKey: Home
 - scrollUntilVisible:
     element:
       text: "View All" # or any other selector

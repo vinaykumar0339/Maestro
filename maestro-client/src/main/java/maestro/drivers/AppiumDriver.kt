@@ -1,6 +1,8 @@
 package maestro.drivers
 
 import com.getvymo.appium.MaestroAppiumDriver
+import io.appium.java_client.android.nativekey.AndroidKey
+import io.appium.java_client.android.nativekey.KeyEvent
 import maestro.Capability
 import maestro.DeviceInfo
 import maestro.Driver
@@ -113,8 +115,55 @@ class AppiumDriver(
         }
     }
 
+    private fun getKeyEvent(code: KeyCode): KeyEvent {
+        return when (code) {
+            KeyCode.ENTER -> KeyEvent(AndroidKey.ENTER)
+            KeyCode.BACKSPACE -> KeyEvent(AndroidKey.DEL)
+            KeyCode.BACK -> KeyEvent(AndroidKey.BACK)
+            KeyCode.HOME -> KeyEvent(AndroidKey.HOME)
+            KeyCode.LOCK -> KeyEvent(AndroidKey.SOFT_SLEEP)
+            KeyCode.VOLUME_UP -> KeyEvent(AndroidKey.VOLUME_UP)
+            KeyCode.VOLUME_DOWN -> KeyEvent(AndroidKey.VOLUME_DOWN)
+            KeyCode.REMOTE_UP -> KeyEvent(AndroidKey.DPAD_UP)
+            KeyCode.REMOTE_DOWN -> KeyEvent(AndroidKey.DPAD_DOWN)
+            KeyCode.REMOTE_LEFT -> KeyEvent(AndroidKey.DPAD_LEFT)
+            KeyCode.REMOTE_RIGHT -> KeyEvent(AndroidKey.DPAD_RIGHT)
+            KeyCode.REMOTE_CENTER -> KeyEvent(AndroidKey.DPAD_CENTER)
+            KeyCode.REMOTE_PLAY_PAUSE -> KeyEvent(AndroidKey.MEDIA_PLAY_PAUSE)
+            KeyCode.REMOTE_STOP -> KeyEvent(AndroidKey.MEDIA_STOP)
+            KeyCode.REMOTE_NEXT -> KeyEvent(AndroidKey.MEDIA_NEXT)
+            KeyCode.REMOTE_PREVIOUS -> KeyEvent(AndroidKey.MEDIA_PREVIOUS)
+            KeyCode.REMOTE_REWIND -> KeyEvent(AndroidKey.MEDIA_REWIND)
+            KeyCode.REMOTE_FAST_FORWARD -> KeyEvent(AndroidKey.MEDIA_FAST_FORWARD)
+            KeyCode.ESCAPE -> KeyEvent(AndroidKey.ESCAPE)
+            KeyCode.POWER -> KeyEvent(AndroidKey.POWER)
+            KeyCode.TAB -> KeyEvent(AndroidKey.SPACE)
+            KeyCode.REMOTE_SYSTEM_NAVIGATION_UP -> throw UnsupportedOperationException("Remote system navigation up is not supported in Appium driver")
+            KeyCode.REMOTE_SYSTEM_NAVIGATION_DOWN -> throw UnsupportedOperationException("Remote system navigation down is not supported in Appium driver")
+            KeyCode.REMOTE_BUTTON_A -> KeyEvent(AndroidKey.BUTTON_A)
+            KeyCode.REMOTE_BUTTON_B -> KeyEvent(AndroidKey.BUTTON_B)
+            KeyCode.REMOTE_MENU -> KeyEvent(AndroidKey.MENU)
+            KeyCode.TV_INPUT -> KeyEvent(AndroidKey.TV_INPUT)
+            KeyCode.TV_INPUT_HDMI_1 -> KeyEvent(AndroidKey.TV_INPUT_HDMI_1)
+            KeyCode.TV_INPUT_HDMI_2 -> KeyEvent(AndroidKey.TV_INPUT_HDMI_2)
+            KeyCode.TV_INPUT_HDMI_3 -> KeyEvent(AndroidKey.TV_INPUT_HDMI_3)
+        }
+    }
+
     override fun pressKey(code: KeyCode) {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "pressKey")) {
+            if (maestroAppiumDriver.isAndroid()) {
+                maestroAppiumDriver.pressAndroidKey(getKeyEvent(code))
+            } else {
+                val buttonNameMap = mapOf(
+                    KeyCode.HOME to "home",
+                    KeyCode.LOCK to "lock",
+                )
+                buttonNameMap[code]?.let {
+                    maestroAppiumDriver.pressIosButtonPress(it)
+                }
+            }
+        }
     }
 
     private fun mapHierarchy(node: Node): TreeNode {

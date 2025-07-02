@@ -4,6 +4,7 @@ import io.appium.java_client.AppiumDriver
 import io.appium.java_client.HidesKeyboard
 import io.appium.java_client.InteractsWithApps
 import io.appium.java_client.android.AndroidDriver
+import io.appium.java_client.android.nativekey.KeyEvent
 import io.appium.java_client.appmanagement.ApplicationState
 import io.appium.java_client.ios.IOSDriver
 import io.appium.java_client.remote.options.BaseOptions
@@ -280,6 +281,24 @@ class MaestroAppiumDriver {
                 tap.addAction(Pause(pointerInput, duration))
                 tap.addAction(pointerInput.createPointerUp(PointerInput.MouseButton.LEFT.asArg()))
                 it.perform(listOf(tap))
+            }
+        )
+    }
+
+    fun pressAndroidKey(keyEvent: KeyEvent) {
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            androidHandler = {
+                it.pressKey(keyEvent)
+            },
+        )
+    }
+
+    fun pressIosButtonPress(name: String) {
+        return executeScript(
+            "mobile: pressButton",
+            mutableMapOf<String, Any>().apply {
+                set("name", name)
             }
         )
     }
