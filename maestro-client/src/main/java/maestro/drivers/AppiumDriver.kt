@@ -35,6 +35,12 @@ class AppiumDriver(
     private val metrics = metricsProvider.withPrefix("maestro.driver").withTags(mapOf("platform" to "<add_platform>", "deviceId" to deviceId))
     private var cachedDeviceInfo: DeviceInfo? = null
 
+    private var isRealDevice = false
+    private var appId = ""
+    init {
+        isRealDevice = capabilities["isRealDevice"] as? Boolean ?: false
+    }
+
     override fun name(): String {
         return "AppiumDriver"
     }
@@ -84,6 +90,7 @@ class AppiumDriver(
         metrics.measured("operation", mapOf("command" to "launchApp", "appId" to appId)) {
             // Launch the app using Appium
             maestroAppiumDriver.launchApp(appId, launchArguments, capabilities)
+            this.appId = appId
         }
     }
 
@@ -486,7 +493,9 @@ class AppiumDriver(
     }
 
     override fun setLocation(latitude: Double, longitude: Double) {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "setLocation")) {
+            maestroAppiumDriver.setLocation(latitude, longitude)
+        }
     }
 
     override fun eraseText(charactersToErase: Int) {
@@ -537,7 +546,7 @@ class AppiumDriver(
     override fun addMedia(mediaFiles: List<File>) {
         metrics.measured("operation", mapOf("command" to "addMedia", "mediaFilesCount" to mediaFiles.size.toString())) {
             LOGGER.info("[Start] Adding media files")
-            mediaFiles.forEach { maestroAppiumDriver.addMediaToDevice(it) }
+            mediaFiles.forEach { maestroAppiumDriver.addMediaToDevice(it, isRealDevice, this.appId) }
             LOGGER.info("[Done] Adding media files")
         }
     }

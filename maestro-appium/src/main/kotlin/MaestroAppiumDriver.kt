@@ -3,7 +3,10 @@ package com.getvymo.appium
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.HidesKeyboard
 import io.appium.java_client.InteractsWithApps
+import io.appium.java_client.Location
 import io.appium.java_client.android.AndroidDriver
+import io.appium.java_client.android.geolocation.AndroidGeoLocation
+import io.appium.java_client.android.geolocation.SupportsExtendedGeolocationCommands
 import io.appium.java_client.android.nativekey.KeyEvent
 import io.appium.java_client.appmanagement.ApplicationState
 import io.appium.java_client.ios.IOSDriver
@@ -34,10 +37,10 @@ class MaestroAppiumDriver {
         val appiumServiceBuilder = AppiumServiceBuilder()
         appiumServiceBuilder
             .usingAnyFreePort()
-//            .withArgument(
-//                GeneralServerFlag.LOG_LEVEL,
-//                "error" // Set the log level to error to reduce noise in logs
-//            )
+            .withArgument(
+                GeneralServerFlag.LOG_LEVEL,
+                "error" // Set the log level to error to reduce noise in logs
+            )
         appiumService = AppiumDriverLocalService.buildService(appiumServiceBuilder)
 
         try {
@@ -53,14 +56,18 @@ class MaestroAppiumDriver {
     }
 
     @Suppress("SdCardPath")
-    fun addMediaToDevice(mediaFile: File) {
+    fun addMediaToDevice(mediaFile: File, isRealDevice: Boolean = false, appId: String) {
         return handleDriverCommand<AppiumDriver, Any, Unit>(
             driver = appiumDriver,
             androidHandler = {
                 it.pushFile("/sdcard/Download/${mediaFile.name}", mediaFile)
             },
             iosHandler = {
-                it.pushFile("@/Documents/automation/${mediaFile.name}", mediaFile)
+                if (isRealDevice) {
+                    it.pushFile("@${appId}:documents/${mediaFile.name}", mediaFile)
+                } else {
+                    it.pushFile("@${appId}:data/${mediaFile.name}", mediaFile)
+                }
             }
         )
     }
@@ -178,18 +185,30 @@ class MaestroAppiumDriver {
         )
     }
 
+    fun setLocation(latitude: Double, longitude: Double) {
+        // TODO: Working Fine in Emulators Need to verify in real devices.
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            androidHandler = {
+                it.setLocation(
+                    AndroidGeoLocation(
+                        latitude,
+                        longitude
+                    )
+                )
+            },
+            iosHandler = {
+                val location = Location(latitude, longitude)
+                it.location = location
+            },
+        )
+    }
+
     fun takeScreenshot(): ByteArray {
         return handleDriverCommand<AppiumDriver, Any, ByteArray>(
             driver = appiumDriver,
             handler = { it.getScreenshotAs(org.openqa.selenium.OutputType.BYTES) }
         )
-    }
-
-    private fun getDriver(): AppiumDriver {
-        if (appiumDriver == null) {
-            throw IllegalStateException("Appium driver is not initialized. Please create the driver first.")
-        }
-        return appiumDriver!!
     }
 
     private fun resetDriver() {
