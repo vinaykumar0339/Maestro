@@ -11,8 +11,8 @@ appId: com.getvymo.ios.enterprise
 #- inputText: vymo2013
 #- tapOn: Login
 - setLocation:
-    latitude: 12.9715987
-    longitude: 77.594566
+    latitude: 36.0699803
+    longitude: -161.3976184
 #- addMedia:
 #    - "/Users/vinaykumar/Downloads/testimage.jpg"
 #- pressKey: Home

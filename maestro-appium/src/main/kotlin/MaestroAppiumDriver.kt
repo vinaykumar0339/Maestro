@@ -186,7 +186,7 @@ class MaestroAppiumDriver {
     }
 
     fun setLocation(latitude: Double, longitude: Double) {
-        // TODO: Working Fine in Emulators Need to verify in real devices.
+        // This code is working fine in ios both simulator and real device. For Android verified for emulator need to check for real android device.
         return handleDriverCommand<AppiumDriver, Any, Unit>(
             driver = appiumDriver,
             androidHandler = {

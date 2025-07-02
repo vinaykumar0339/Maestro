@@ -20,9 +20,11 @@ appiumConfiguration:
 
 
     platformName: iOS
-    udid: F40C4AA5-07D4-46B2-BD02-5DE1871C0FF6
+    udid: 00008101-000A29E00C09001E
     automationName: XCUITest
-    noReset: true
+    noReset: false
     bundleId: com.getvymo.ios.enterprise
     appium:settings[snapshotMaxDepth]: 60
     appium:settings[pageSourceExcludedAttributes]: "visible,accessible"
+    appium:webDriverAgentUrl: http://192.168.1.15:8100
+    isRealDevice: true
