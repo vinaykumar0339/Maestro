@@ -18,6 +18,7 @@ import org.openqa.selenium.interactions.Pause
 import org.openqa.selenium.interactions.PointerInput
 import org.openqa.selenium.interactions.Sequence
 import org.w3c.dom.Document
+import java.io.File
 import java.time.Duration
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -49,6 +50,19 @@ class MaestroAppiumDriver {
             throw e
         }
 
+    }
+
+    @Suppress("SdCardPath")
+    fun addMediaToDevice(mediaFile: File) {
+        return handleDriverCommand<AppiumDriver, Any, Unit>(
+            driver = appiumDriver,
+            androidHandler = {
+                it.pushFile("/sdcard/Download/${mediaFile.name}", mediaFile)
+            },
+            iosHandler = {
+                it.pushFile("/var/mobile/Media/Downloads/${mediaFile.name}", mediaFile)
+            }
+        )
     }
 
     private inline fun <reified T : AppiumDriver?, reified I : Any?, R> handleDriverCommand(

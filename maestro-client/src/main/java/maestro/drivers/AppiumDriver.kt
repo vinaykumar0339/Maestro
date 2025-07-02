@@ -18,6 +18,7 @@ import maestro.utils.MetricsProvider
 import maestro.utils.ScreenshotUtils
 import okio.Sink
 import okio.buffer
+import org.slf4j.LoggerFactory
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.File
@@ -518,11 +519,15 @@ class AppiumDriver(
     }
 
     override fun setPermissions(appId: String, permissions: Map<String, String>) {
-
+        // Don't find a way to set permissions in Appium, by permission list either we can accept all or disable all. by appium capability.
     }
 
     override fun addMedia(mediaFiles: List<File>) {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "addMedia", "mediaFilesCount" to mediaFiles.size.toString())) {
+            LOGGER.info("[Start] Adding media files")
+            mediaFiles.forEach { maestroAppiumDriver.addMediaToDevice(it) }
+            LOGGER.info("[Done] Adding media files")
+        }
     }
 
     override fun isAirplaneModeEnabled(): Boolean {
@@ -535,6 +540,8 @@ class AppiumDriver(
 
     companion object {
         private const val SCREENSHOT_DIFF_THRESHOLD = 0.005
+        private val LOGGER = LoggerFactory.getLogger(AppiumDriver::class.java)
+
     }
 
 }
