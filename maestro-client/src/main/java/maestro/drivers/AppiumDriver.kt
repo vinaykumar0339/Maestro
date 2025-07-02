@@ -157,7 +157,8 @@ class AppiumDriver(
             } else {
                 val buttonNameMap = mapOf(
                     KeyCode.HOME to "home",
-                    KeyCode.LOCK to "lock",
+                    KeyCode.VOLUME_UP to "volumeUp",
+                    KeyCode.VOLUME_DOWN to "volumeDown",
                 )
                 buttonNameMap[code]?.let {
                     maestroAppiumDriver.pressIosButtonPress(it)
