@@ -1,4 +1,4 @@
-appId: com.getvymo.android.debug
+appId: com.getvymo.ios.enterprise
 ---
 - launchApp:
     stopApp: false
@@ -12,7 +12,7 @@ appId: com.getvymo.android.debug
 - tapOn: Login
 - addMedia:
     - "/Users/vinaykumar/Downloads/testimage.jpg"
-- pressKey: Home
+#- pressKey: Home
 - scrollUntilVisible:
     element:
       text: "View All" # or any other selector

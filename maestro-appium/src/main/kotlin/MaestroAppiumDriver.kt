@@ -34,10 +34,10 @@ class MaestroAppiumDriver {
         val appiumServiceBuilder = AppiumServiceBuilder()
         appiumServiceBuilder
             .usingAnyFreePort()
-            .withArgument(
-                GeneralServerFlag.LOG_LEVEL,
-                "error" // Set the log level to error to reduce noise in logs
-            )
+//            .withArgument(
+//                GeneralServerFlag.LOG_LEVEL,
+//                "error" // Set the log level to error to reduce noise in logs
+//            )
         appiumService = AppiumDriverLocalService.buildService(appiumServiceBuilder)
 
         try {
@@ -60,7 +60,7 @@ class MaestroAppiumDriver {
                 it.pushFile("/sdcard/Download/${mediaFile.name}", mediaFile)
             },
             iosHandler = {
-                it.pushFile("/var/mobile/Media/Downloads/${mediaFile.name}", mediaFile)
+                it.pushFile("@/Documents/automation/${mediaFile.name}", mediaFile)
             }
         )
     }

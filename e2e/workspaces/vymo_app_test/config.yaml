@@ -9,11 +9,10 @@ platform:
 # Appium Configuration
 appiumConfiguration:
   capabilities:
-    platformName: Android
-    udid: emulator-5554
-    automationName: UiAutomator2
-    noReset: false
-    appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
-    appium:appPackage: com.getvymo.android.debug
-    appium:optionalIntentArguments: -e appiumTest true
-    appium:autoGrantPermissions: true
+    platformName: iOS
+    udid: F40C4AA5-07D4-46B2-BD02-5DE1871C0FF6
+    automationName: XCUITest
+    noReset: true
+    bundleId: com.getvymo.ios.enterprise
+    appium:settings[snapshotMaxDepth]: 60
+    appium:settings[pageSourceExcludedAttributes]: "visible,accessible"

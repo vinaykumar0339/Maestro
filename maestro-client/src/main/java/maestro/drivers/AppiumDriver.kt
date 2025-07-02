@@ -18,6 +18,7 @@ import maestro.utils.MetricsProvider
 import maestro.utils.ScreenshotUtils
 import okio.Sink
 import okio.buffer
+import org.openqa.selenium.WebDriver
 import org.slf4j.LoggerFactory
 import org.w3c.dom.Element
 import org.w3c.dom.Node
@@ -32,9 +33,23 @@ class AppiumDriver(
 ): Driver {
 
     private val metrics = metricsProvider.withPrefix("maestro.driver").withTags(mapOf("platform" to "<add_platform>", "deviceId" to deviceId))
+    private var cachedDeviceInfo: DeviceInfo? = null
 
     override fun name(): String {
         return "AppiumDriver"
+    }
+
+    private fun setDeviceInfo(window: WebDriver.Window) {
+        metrics.measured("setDeviceInfo") {
+            // Set the device info from the window rect
+            cachedDeviceInfo = DeviceInfo(
+                platform = if (maestroAppiumDriver.isAndroid()) Platform.ANDROID else Platform.IOS,
+                widthPixels = window.size.width,
+                heightPixels = window.size.height,
+                widthGrid = window.size.width,
+                heightGrid = window.size.height,
+            )
+        }
     }
 
     override fun open() {
@@ -43,6 +58,8 @@ class AppiumDriver(
             // think is this required for the multi session devices etc.
             maestroAppiumDriver.startServer()
             maestroAppiumDriver.createDriver(capabilities)
+            setDeviceInfo(maestroAppiumDriver.getWindowRect())
+
         }
     }
 
@@ -56,15 +73,10 @@ class AppiumDriver(
 
     override fun deviceInfo(): DeviceInfo {
         return metrics.measured("deviceInfo") {
-            // Get device information using Appium
-            val windowRect = maestroAppiumDriver.getWindowRect()
-            return@measured DeviceInfo(
-                platform = if (maestroAppiumDriver.isAndroid()) Platform.ANDROID else Platform.IOS,
-                widthPixels = windowRect.size.width,
-                heightPixels = windowRect.size.height,
-                widthGrid = windowRect.size.width,
-                heightGrid = windowRect.size.height,
-            )
+            if (cachedDeviceInfo == null) {
+                throw IllegalStateException("Window is not initialized. Please call open() before deviceInfo().")
+            }
+            return@measured cachedDeviceInfo!!
         }
     }
 
