@@ -95,7 +95,10 @@ class AppiumDriver(
     }
 
     override fun clearKeychain() {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "clearKeychain")) {
+            // Clear keychain is not directly supported by Appium, so this is a no-op
+            maestroAppiumDriver.clearKeyChain()
+        }
     }
 
     override fun tap(point: Point) {
@@ -243,7 +246,12 @@ class AppiumDriver(
     }
 
     override fun scrollVertical() {
-        TODO("Not yet implemented")
+        metrics.measured(
+            "operation",
+            mapOf("command" to "scrollVertical")
+        ) {
+            swipe(SwipeDirection.UP, 400)
+        }
     }
 
     override fun isKeyboardVisible(): Boolean {
@@ -251,15 +259,135 @@ class AppiumDriver(
     }
 
     override fun swipe(start: Point, end: Point, durationMs: Long) {
-        TODO("Not yet implemented")
+       return metrics.measured(
+           "operation",
+           mapOf("command" to "swipe", "start" to start.toString(), "end" to end.toString(), "durationMs" to durationMs.toString())
+       ) {
+           maestroAppiumDriver.scroll(
+               startX = start.x,
+               startY = start.y,
+               endX = end.x,
+               endY = end.y,
+               duration = Duration.ofMillis(durationMs)
+           )
+       }
     }
 
     override fun swipe(swipeDirection: SwipeDirection, durationMs: Long) {
-        TODO("Not yet implemented")
+        metrics.measured(
+            "operation",
+            mapOf("command" to "swipeWithDirection", "direction" to swipeDirection.name, "durationMs" to durationMs.toString())
+        ) {
+            val deviceInfo = deviceInfo()
+            when (swipeDirection) {
+                SwipeDirection.UP -> {
+                    val startX = (deviceInfo.widthGrid * 0.5f).toInt()
+                    val startY = (deviceInfo.heightGrid * 0.5f).toInt()
+                    val endX = (deviceInfo.widthGrid * 0.5f).toInt()
+                    val endY = (deviceInfo.heightGrid * 0.1f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = startX,
+                        startY = startY,
+                        endX = endX,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.DOWN -> {
+                    val startX = (deviceInfo.widthGrid * 0.5f).toInt()
+                    val startY = (deviceInfo.heightGrid * 0.2f).toInt()
+                    val endX = (deviceInfo.widthGrid * 0.5f).toInt()
+                    val endY = (deviceInfo.heightGrid * 0.9f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = startX,
+                        startY = startY,
+                        endX = endX,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.RIGHT -> {
+                    val startX = (deviceInfo.widthGrid * 0.1f).toInt()
+                    val startY = (deviceInfo.heightGrid * 0.5f).toInt()
+                    val endX = (deviceInfo.widthGrid * 0.9f).toInt()
+                    val endY = (deviceInfo.heightGrid * 0.5f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = startX,
+                        startY = startY,
+                        endX = endX,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.LEFT -> {
+                    val startX = (deviceInfo.widthGrid * 0.9f).toInt()
+                    val startY = (deviceInfo.heightGrid * 0.5f).toInt()
+                    val endX = (deviceInfo.widthGrid * 0.1f).toInt()
+                    val endY = (deviceInfo.heightGrid * 0.5f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = startX,
+                        startY = startY,
+                        endX = endX,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+            }
+        }
     }
 
     override fun swipe(elementPoint: Point, direction: SwipeDirection, durationMs: Long) {
-        TODO("Not yet implemented")
+        metrics.measured("operation", mapOf("command" to "swipeWithElementPoint", "direction" to direction.toString())) {
+            val deviceInfo = deviceInfo()
+            when (direction) {
+                SwipeDirection.UP -> {
+                    val endY = (deviceInfo.heightGrid * 0.1f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = elementPoint.x,
+                        startY = elementPoint.y,
+                        endX = elementPoint.x,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.DOWN -> {
+                    val endY = (deviceInfo.heightGrid * 0.9f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = elementPoint.x,
+                        startY = elementPoint.y,
+                        endX = elementPoint.x,
+                        endY = endY,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.RIGHT -> {
+                    val endX = (deviceInfo.widthGrid * 0.9f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = elementPoint.x,
+                        startY = elementPoint.y,
+                        endX = endX,
+                        endY = elementPoint.y,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+
+                SwipeDirection.LEFT -> {
+                    val endX = (deviceInfo.widthGrid * 0.1f).toInt()
+                    maestroAppiumDriver.scroll(
+                        startX = elementPoint.x,
+                        startY = elementPoint.y,
+                        endX = endX,
+                        endY = elementPoint.y,
+                        duration = Duration.ofMillis(durationMs)
+                    )
+                }
+            }
+        }
     }
 
     override fun backPress() {

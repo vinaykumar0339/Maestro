@@ -10,11 +10,21 @@ appId: com.getvymo.android.debug
 - tapOn: Password
 - inputText: vymo2013
 - tapOn: Login
-- tapOn:
-      id: appium_date_edit_field
-- inputText: "1751228741068"
-- copyTextFrom:
-    id: appium_date_edit_field
-- assertVisible:
-    id: appium_date_edit_field
-    text: "^${maestro.copiedText}$"
+- scrollUntilVisible:
+    element:
+      text: "View All" # or any other selector
+      rightOf:
+        text: "Advisors"
+    direction: DOWN # DOWN|UP|LEFT|RIGHT (optional, default: DOWN)
+    timeout: 100000 # (optional, default: 20000) ms
+    speed: 40 # 0-100 (optional, default: 40) Scroll speed. Higher values scroll faster.
+    visibilityPercentage: 100 # 0-100 (optional, default: 100) Percentage of element visible in viewport
+    centerElement: true # true|false (optional, default: false)
+#- tapOn:
+#      id: appium_date_edit_field
+#- inputText: "1751228741068"
+#- copyTextFrom:
+#    id: appium_date_edit_field
+#- assertVisible:
+#    id: appium_date_edit_field
+#    text: "^${maestro.copiedText}$"

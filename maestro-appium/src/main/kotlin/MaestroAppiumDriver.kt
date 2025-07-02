@@ -237,6 +237,14 @@ class MaestroAppiumDriver {
         )
     }
 
+    fun clearKeyChain() {
+        if (isAndroid()) {
+            // Android does not have a keychain concept like iOS, so this is a no-op
+        } else {
+            // TODO: need to implement the code Will check later.
+        }
+    }
+
     fun tap(
         x: Int,
         y: Int,
