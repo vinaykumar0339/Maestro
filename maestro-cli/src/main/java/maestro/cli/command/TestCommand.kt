@@ -273,7 +273,7 @@ class TestCommand : Callable<Int> {
             .toList()
 
         val missingDevices = requestedShards - deviceIds.size
-        if (missingDevices > 0) {
+        if (missingDevices > 0 && !appium) { // No Need to check for device availability if using Appium Driver
             PrintUtils.warn("Want to use ${deviceIds.size} devices, which is not enough to run $requestedShards shards. Missing $missingDevices device(s).")
             throw CliError("Not enough devices connected ($missingDevices) to run the requested number of shards ($requestedShards).")
         }
@@ -341,7 +341,7 @@ class TestCommand : Callable<Int> {
         debugOutputPath: Path,
     ): Triple<Int?, Int?, TestExecutionSummary?> {
         val driverHostPort = selectPort(effectiveShards)
-        val deviceId = deviceIds[shardIndex]
+        val deviceId = deviceIds.getOrNull(shardIndex) ?: ""
         val executionPlan = chunkPlans[shardIndex]
 
         logger.info("[shard ${shardIndex + 1}] Selected device $deviceId using port $driverHostPort with execution plan $executionPlan")
