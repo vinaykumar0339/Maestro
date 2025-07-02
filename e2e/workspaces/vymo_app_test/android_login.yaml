@@ -4,32 +4,38 @@ appId: com.getvymo.ios.enterprise
     stopApp: false
     arguments:
       appiumTest: "true"
-#- tapOn: Email Format / Invite Code
-#- inputText: jointsales@agency.com
-#- tapOn: Next
-#- tapOn: Password
-#- inputText: vymo2013
-#- tapOn: Login
-- setLocation:
-    latitude: 36.0699803
-    longitude: -161.3976184
-#- addMedia:
-#    - "/Users/vinaykumar/Downloads/testimage.jpg"
+- tapOn: Email Format / Invite Code
+- inputText: jointsales@agency.com
+- tapOn: Next
+- tapOn: Password
+- inputText: vymo2013
+- tapOn: Login
+- addMedia:
+    - "/Users/vinaykumar/Downloads/testimage.jpg"
 #- pressKey: Home
-#- scrollUntilVisible:
-#    element:
+- tapOn:
+    id: hamburger-tab
+- tapOn: Hello
+- scrollUntilVisible:
+    element:
+      id: "card-view-all-button-Advisors"
 #      text: "View All " # or any other selector
 #      rightOf:
 #        text: "Advisors"
-#    direction: DOWN # DOWN|UP|LEFT|RIGHT (optional, default: DOWN)
-#    timeout: 100000 # (optional, default: 20000) ms
-#    speed: 40 # 0-100 (optional, default: 40) Scroll speed. Higher values scroll faster.
-#    visibilityPercentage: 100 # 0-100 (optional, default: 100) Percentage of element visible in viewport
-#    centerElement: true # true|false (optional, default: false)
-#- tapOn:
-#      text: "View All "
-#      rightOf:
-#          text: "Advisors"
+#      below:
+#        text: "Quick Updates"
+    direction: DOWN # DOWN|UP|LEFT|RIGHT (optional, default: DOWN)
+    timeout: 100000 # (optional, default: 20000) ms
+    speed: 40 # 0-100 (optional, default: 40) Scroll speed. Higher values scroll faster.
+    visibilityPercentage: 100 # 0-100 (optional, default: 100) Percentage of element visible in viewport
+    centerElement: false # true|false (optional, default: false)
+- tapOn:
+    id: "card-view-all-button-Advisors"
+#    text: "View All "
+#    rightOf:
+#      text: "Advisors"
+#    below:
+#      text: "Quick Updates"
 #- tapOn:
 #      id: appium_date_edit_field
 #- inputText: "1751228741068"

@@ -187,6 +187,7 @@ class AppiumDriver(
         }
     }
 
+    // TODO: check all the relevant properties for android and ios and make it common properties.
     private fun mapHierarchy(node: Node): TreeNode {
         val attributes = if (node is Element) {
             val attributesBuilder = mutableMapOf<String, String>()
