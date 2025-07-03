@@ -19,6 +19,8 @@
 
 package maestro.cli.session
 
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 import dadb.Dadb
 import dadb.adbserver.AdbServer
 import ios.LocalIOSDevice
@@ -133,6 +135,13 @@ object MaestroSessionManager {
         appiumDeviceName: String?,
         appiumUdid: String?,
         appiumCapabilityKey: String?,
+        appiumHostname: String = "localhost",
+        appiumPort: Int = 4723,
+        appiumPath: String = "/wd/hub",
+        appiumProtocol: Protocol = Protocol.HTTP,
+        appiumUser: String? = null,
+        appiumKey: String? = null,
+        appiumRunnerTypeEnum: RunnerType = RunnerType.LOCAL,
         appiumConfiguration: WorkspaceConfig.AppiumConfiguration,
         block: (MaestroSession) -> T
     ): T {
@@ -158,16 +167,16 @@ object MaestroSessionManager {
             ?: capabilities["appium:udid"]
             ?: capabilities["deviceName"]
             ?: "") as String
-        val maestro = Maestro.android(
+        val maestro = Maestro.appium(
             driver = AppiumDriver(
                 deviceId = deviceId,
-                user = appiumConfiguration.user,
-                key = appiumConfiguration.key,
-                hostname = appiumConfiguration.hostname,
-                port = appiumConfiguration.port,
-                runnerType = appiumConfiguration.runnerType,
-                protocol = appiumConfiguration.protocol,
-                path = appiumConfiguration.path,
+                user = appiumUser,
+                key = appiumKey,
+                hostname = appiumHostname,
+                port = appiumPort,
+                runnerType = appiumRunnerTypeEnum,
+                protocol = appiumProtocol,
+                path = appiumPath,
                 capabilities = capabilities
             ),
             openDriver = true
@@ -203,6 +212,13 @@ object MaestroSessionManager {
         appiumDeviceName: String? = null,
         appiumUdid: String? = null,
         appiumCapabilityKey: String? = null,
+        appiumHostname: String = "localhost",
+        appiumPort: Int = 4723,
+        appiumPath: String = "/wd/hub",
+        appiumProtocol: Protocol = Protocol.HTTP,
+        appiumUser: String? = null,
+        appiumKey: String? = null,
+        appiumRunnerTypeEnum: RunnerType = RunnerType.LOCAL,
         block: (MaestroSession) -> T,
     ): T {
         if (appiumTests) {
@@ -212,6 +228,13 @@ object MaestroSessionManager {
                     appiumUdid,
                     appiumCapabilityKey,
                     appiumConfiguration = it,
+                    appiumHostname = appiumHostname,
+                    appiumPort = appiumPort,
+                    appiumProtocol = appiumProtocol,
+                    appiumUser = appiumUser,
+                    appiumKey = appiumKey,
+                    appiumPath = appiumPath,
+                    appiumRunnerTypeEnum = appiumRunnerTypeEnum,
                     block = block
                 )
             } ?: run {

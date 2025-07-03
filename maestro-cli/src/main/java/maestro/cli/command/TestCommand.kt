@@ -19,6 +19,8 @@
 
 package maestro.cli.command
 
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -215,6 +217,63 @@ class TestCommand : Callable<Int> {
     )
     private var appiumCapabilityKey: String? = null
 
+    @Option(
+        names = ["--appium-hostname"],
+        description = ["The hostname of the Appium server. Defaults to 'localhost'."],
+        hidden = true
+    )
+    private var appiumHostname: String = "localhost"
+
+    @Option(
+        names = ["--appium-port"],
+        description = ["The port of the Appium server. Defaults to 4723."],
+        hidden = true
+    )
+    private var appiumPort: Int = 4723
+
+    @Option(
+        names = ["--appium-path"],
+        description = ["The path to the Appium server. Defaults to '/wd/hub'."],
+        hidden = true
+    )
+    private var appiumPath: String = "/wd/hub"
+
+    @Option(
+        names = ["--appium-protocol"],
+        description = ["The protocol to use with Appium. Defaults to 'http'."],
+        hidden = true
+    )
+    private var appiumProtocol: String = Protocol.HTTP.scheme
+
+    private val appiumProtocolEnum: Protocol
+        get() = Protocol.getByName(appiumProtocol)
+            ?: error("Invalid Appium protocol: $appiumProtocol. Supported protocols are: ${Protocol.values().joinToString(", ") { it.scheme }}")
+
+    @Option(
+        names = ["--appium-user"],
+        description = ["The username for the Appium server. This is required when you want to connect to cloud Appium services like BrowserStack or Sauce Labs."],
+        hidden = true
+    )
+    private var appiumUser: String? = null
+
+    @Option(
+        names = ["--appium-key"],
+        description = ["The access key for the Appium server. This is required when you want to connect to cloud Appium services like BrowserStack or Sauce Labs."],
+        hidden = true
+    )
+    private var appiumKey: String? = null
+
+    @Option(
+        names = ["--appium-runner-type"],
+        description = ["The type of Appium runner to use. Defaults to 'local'. Supported values: 'local', 'browserstack', 'saucelabs', 'lambdatest'."],
+        hidden = true
+    )
+    private var appiumRunnerType: String = "local"
+
+    private val appiumRunnerTypeEnum: RunnerType
+        get() = RunnerType.getByName(appiumRunnerType)
+            ?: error("Invalid Appium runner type: $appiumRunnerType. Supported types are: ${RunnerType.values().joinToString(", ") { it.name }}")
+
     @CommandLine.Spec
     lateinit var commandSpec: CommandLine.Model.CommandSpec
 
@@ -383,6 +442,13 @@ class TestCommand : Callable<Int> {
             appiumUdid = appiumUdid,
             appiumDeviceName = appiumDeviceName,
             appiumCapabilityKey = appiumCapabilityKey,
+            appiumHostname = appiumHostname,
+            appiumProtocol = appiumProtocolEnum,
+            appiumPort = appiumPort,
+            appiumPath = appiumPath,
+            appiumKey = appiumKey,
+            appiumUser = appiumUser,
+            appiumRunnerTypeEnum = appiumRunnerTypeEnum,
         ) { session ->
             val maestro = session.maestro
             val device = session.device

@@ -54,17 +54,8 @@ data class WorkspaceConfig(
     }
 
     data class AppiumConfiguration(
-        // try to move the user, key, hostname, port, protocol, path to a cli options
-        val user: String?,
-        val key: String?,
-        val hostname: String = "localhost",
-        val port: Int = 4723,
-        val protocol: Protocol,
-        val path: String = "/wd/hub",
-        val runnerType: RunnerType = RunnerType.LOCAL,
         val capabilities: Map<String, Map<String, Any>> = emptyMap(),
-    ) {
-    }
+    )
 
     @JsonAnySetter
     fun setOtherField(key: String, other: Any?) {
