@@ -1,6 +1,8 @@
 package maestro.drivers
 
 import com.getvymo.appium.MaestroAppiumDriver
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 import io.appium.java_client.android.nativekey.AndroidKey
 import io.appium.java_client.android.nativekey.KeyEvent
 import maestro.Capability
@@ -23,11 +25,19 @@ import org.slf4j.LoggerFactory
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.File
+import java.net.URL
 import java.time.Duration
 
 class AppiumDriver(
     private val maestroAppiumDriver: MaestroAppiumDriver = MaestroAppiumDriver(),
     private val deviceId: String,
+    private val user: String?,
+    private val key: String?,
+    private val hostname: String = "localhost",
+    private val port: Int = 4723,
+    private val protocol: Protocol = Protocol.HTTP,
+    private val path: String = "/wd/hub",
+    private val runnerType: RunnerType,
     private var capabilities: Map<String, Any>,
     private val metricsProvider: Metrics = MetricsProvider.getInstance(),
 ): Driver {
@@ -62,8 +72,21 @@ class AppiumDriver(
         metrics.measured("open") {
             // start the appium server.
             // think is this required for the multi session devices etc.
-            maestroAppiumDriver.startServer()
-            maestroAppiumDriver.createDriver(capabilities)
+            // if it is local then only start the local server.
+            val url: URL
+            if (runnerType == RunnerType.LOCAL) {
+                maestroAppiumDriver.startServer()
+                url = maestroAppiumDriver.getServerUrl()
+            } else {
+                // if protocol, user, key, hostname, port are provided, then use them to create the URL, if not throw an error
+                if (user == null || key == null || hostname.isEmpty() || port <= 0) {
+                    throw IllegalArgumentException("User, key, hostname and port must be provided for remote Appium sessions.")
+                } else {
+                    url = URL("${protocol.scheme}://$user:$key@$hostname:$port$path")
+                }
+            }
+            // change the capabilities build, name and console cloud provider related options.
+            maestroAppiumDriver.createDriver(capabilities, url)
             setDeviceInfo(maestroAppiumDriver.getWindowRect())
 
         }

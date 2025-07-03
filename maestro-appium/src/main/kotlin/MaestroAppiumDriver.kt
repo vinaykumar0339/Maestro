@@ -6,7 +6,6 @@ import io.appium.java_client.InteractsWithApps
 import io.appium.java_client.Location
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.geolocation.AndroidGeoLocation
-import io.appium.java_client.android.geolocation.SupportsExtendedGeolocationCommands
 import io.appium.java_client.android.nativekey.KeyEvent
 import io.appium.java_client.appmanagement.ApplicationState
 import io.appium.java_client.ios.IOSDriver
@@ -22,6 +21,7 @@ import org.openqa.selenium.interactions.PointerInput
 import org.openqa.selenium.interactions.Sequence
 import org.w3c.dom.Document
 import java.io.File
+import java.net.URL
 import java.time.Duration
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -53,6 +53,13 @@ class MaestroAppiumDriver {
             throw e
         }
 
+    }
+
+    fun getServerUrl(): URL {
+        if (appiumService == null || !appiumService!!.isRunning) {
+            throw IllegalStateException("Appium server is not running. Please start the server first.")
+        }
+        return appiumService!!.url
     }
 
     @Suppress("SdCardPath")
@@ -160,7 +167,11 @@ class MaestroAppiumDriver {
         )
     }
 
-    fun launchApp(appId: String, launchArguments: Map<String, Any> = emptyMap(), capabilities: Map<String, Any> = emptyMap()) {
+    fun launchApp(
+        appId: String,
+        launchArguments: Map<String, Any> = emptyMap(),
+        capabilities: Map<String, Any> = emptyMap(),
+    ) {
         // no need to do anything create Driver should automatically open the app.
         // Make sure stopApp is false from the yaml files.
         return handleDriverCommand<AppiumDriver, Any, Unit>(
@@ -236,11 +247,9 @@ class MaestroAppiumDriver {
 
     fun createDriver(
         capabilities: Map<String, Any>,
+        serverURL: URL,
         autoLaunch: Boolean = false,
     ): AppiumDriver {
-        if (appiumService == null || !appiumService!!.isRunning) {
-            throw IllegalStateException("Appium server is not running. Please start the server first.")
-        }
 
         val nonAutoLaunchCapabilities = capabilities.toMutableMap().apply {
             set("autoLaunch", autoLaunch)
@@ -249,11 +258,11 @@ class MaestroAppiumDriver {
         val options = getCapabilitiesOptions(nonAutoLaunchCapabilities)
         appiumDriver = when (options.platformName) {
             Platform.ANDROID -> {
-                AndroidDriver(appiumService!!.url, options)
+                AndroidDriver(serverURL, options)
             }
 
             Platform.IOS -> {
-                IOSDriver(appiumService!!.url, options)
+                IOSDriver(serverURL, options)
             }
 
             else -> {

@@ -24,6 +24,7 @@ tasks.named("compileKotlin", KotlinCompilationTask::class.java) {
 
 dependencies {
     implementation(project(":maestro-client"))
+    implementation(project(":maestro-appium"))
 
     api(libs.jackson.core.databind)
     api(libs.jackson.module.kotlin)

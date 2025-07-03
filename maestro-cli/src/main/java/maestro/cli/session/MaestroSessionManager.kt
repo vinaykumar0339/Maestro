@@ -141,6 +141,13 @@ object MaestroSessionManager {
         val maestro = Maestro.android(
             driver = AppiumDriver(
                 deviceId = deviceId,
+                user = appiumConfiguration.user,
+                key = appiumConfiguration.key,
+                hostname = appiumConfiguration.hostname,
+                port = appiumConfiguration.port,
+                runnerType = appiumConfiguration.runnerType,
+                protocol = appiumConfiguration.protocol,
+                path = appiumConfiguration.path,
                 capabilities = appiumConfiguration.capabilities
             ),
             openDriver = true

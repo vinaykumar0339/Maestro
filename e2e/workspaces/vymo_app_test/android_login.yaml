@@ -1,4 +1,4 @@
-appId: com.getvymo.ios.enterprise
+appId: com.getvymo.android
 ---
 - launchApp:
     stopApp: false
@@ -13,8 +13,8 @@ appId: com.getvymo.ios.enterprise
 - addMedia:
     - "/Users/vinaykumar/Downloads/testimage.jpg"
 #- pressKey: Home
-- tapOn:
-    id: hamburger-tab
+#- tapOn:
+#    id: hamburger-tab
 - tapOn: Hello
 - scrollUntilVisible:
     element:

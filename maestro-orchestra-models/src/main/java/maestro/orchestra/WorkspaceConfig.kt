@@ -2,6 +2,8 @@ package maestro.orchestra
 
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 
 data class WorkspaceConfig(
     val flows: StringList? = null,
@@ -52,8 +54,16 @@ data class WorkspaceConfig(
     }
 
     data class AppiumConfiguration(
+        val user: String?,
+        val key: String?,
+        val hostname: String = "localhost",
+        val port: Int = 4723,
+        val protocol: Protocol,
+        val path: String = "/wd/hub",
+        val runnerType: RunnerType = RunnerType.LOCAL,
         val capabilities: Map<String, Any> = emptyMap(),
-    )
+    ) {
+    }
 
     @JsonAnySetter
     fun setOtherField(key: String, other: Any?) {
