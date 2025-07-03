@@ -195,6 +195,26 @@ class TestCommand : Callable<Int> {
     )
     private var appium: Boolean = false
 
+    @Option(
+        names = ["--appium-device-name"],
+        description = ["The name of the device to use with Appium. If not provided, it will use from the capabilities"],
+        hidden = true
+    )
+    private var appiumDeviceName: String? = null
+
+    @Option(
+        names = ["--appium-udid"],
+        description = ["The UDID of the device to use with Appium. If not provided, it will use from the capabilities"],
+        hidden = true
+    )
+    private var appiumUdid: String? = null
+
+    @Option(
+        names = ["--appium-capabilityKey"],
+        description = ["The key of the capability config to use with Appium. This is required when --appium is set to true."],
+    )
+    private var appiumCapabilityKey: String? = null
+
     @CommandLine.Spec
     lateinit var commandSpec: CommandLine.Model.CommandSpec
 
@@ -248,6 +268,9 @@ class TestCommand : Callable<Int> {
     }
 
     private fun handleSessions(debugOutputPath: Path, plan: ExecutionPlan): Int = runBlocking(Dispatchers.IO) {
+        if (appium && appiumCapabilityKey.isNullOrBlank()) {
+            throw CliError("When using Appium, you must specify the --appium-capabilityKey option to select the desired capability configuration.")
+        }
         val requestedShards = shardSplit ?: shardAll ?: 1
         if (requestedShards > 1 && plan.sequence.flows.isNotEmpty()) {
             error("Cannot run sharded tests with sequential execution")
@@ -357,6 +380,9 @@ class TestCommand : Callable<Int> {
             reinstallDriver = reinstallDriver,
             executionPlan = executionPlan,
             appiumTests = appium,
+            appiumUdid = appiumUdid,
+            appiumDeviceName = appiumDeviceName,
+            appiumCapabilityKey = appiumCapabilityKey,
         ) { session ->
             val maestro = session.maestro
             val device = session.device

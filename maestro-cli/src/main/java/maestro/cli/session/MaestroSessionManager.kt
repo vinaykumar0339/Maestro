@@ -130,13 +130,33 @@ object MaestroSessionManager {
     }
 
     private fun <T> handleSessionForAppiumMaestro(
+        appiumDeviceName: String?,
+        appiumUdid: String?,
+        appiumCapabilityKey: String?,
         appiumConfiguration: WorkspaceConfig.AppiumConfiguration,
         block: (MaestroSession) -> T
     ): T {
 
-        val deviceId = (appiumConfiguration.capabilities["udid"]
-            ?: appiumConfiguration.capabilities["appium:udid"]
-            ?: appiumConfiguration.capabilities["deviceName"]
+        val capabilities = appiumConfiguration.capabilities[appiumCapabilityKey ?: "default"]?.toMutableMap()
+            ?: error("Appium capabilities for key '$appiumCapabilityKey' not found in the configuration.")
+
+        if (!appiumDeviceName.isNullOrEmpty()) {
+            capabilities.apply {
+                set("deviceName", appiumDeviceName)
+                set("appium:deviceName", appiumDeviceName)
+            }
+        }
+
+        if (!appiumUdid.isNullOrEmpty()) {
+            capabilities.apply {
+                set("udid", appiumUdid)
+                set("appium:udid", appiumUdid)
+            }
+        }
+
+        val deviceId = (capabilities["udid"]
+            ?: capabilities["appium:udid"]
+            ?: capabilities["deviceName"]
             ?: "") as String
         val maestro = Maestro.android(
             driver = AppiumDriver(
@@ -148,7 +168,7 @@ object MaestroSessionManager {
                 runnerType = appiumConfiguration.runnerType,
                 protocol = appiumConfiguration.protocol,
                 path = appiumConfiguration.path,
-                capabilities = appiumConfiguration.capabilities
+                capabilities = capabilities
             ),
             openDriver = true
         )
@@ -180,11 +200,17 @@ object MaestroSessionManager {
         deviceIndex: Int? = null,
         executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
         appiumTests: Boolean = false,
+        appiumDeviceName: String? = null,
+        appiumUdid: String? = null,
+        appiumCapabilityKey: String? = null,
         block: (MaestroSession) -> T,
     ): T {
         if (appiumTests) {
             executionPlan?.workspaceConfig?.appiumConfiguration?.let {
                 return handleSessionForAppiumMaestro(
+                    appiumDeviceName,
+                    appiumUdid,
+                    appiumCapabilityKey,
                     appiumConfiguration = it,
                     block = block
                 )

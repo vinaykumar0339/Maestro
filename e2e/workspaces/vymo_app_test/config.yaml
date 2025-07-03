@@ -15,48 +15,48 @@ appiumConfiguration:
   protocol: HTTP
   runnerType: LAMBDA_TEST
   capabilities:
-#    platformName: Android
-#    udid: emulator-5554
-#    automationName: UiAutomator2
-#    noReset: false
-#    appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
-#    appium:appPackage: com.getvymo.android.debug
-#    appium:optionalIntentArguments: -e appiumTest true
-#    appium:autoGrantPermissions: true
-#    app: lt://APP10160201161750415149305925
-#    isRealMobile: true
-
-    platformName: Android
-    deviceName: "Oppo*"
-    automationName: UiAutomator2
-    noReset: false
-    appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
-    appium:appPackage: com.getvymo.android
-    appium:optionalIntentArguments: -e appiumTest true
-    appium:autoGrantPermissions: true
-    app: lt://APP10160261801751510373072641
-    isRealMobile: true
-
-    # change this setting from here.
-    build: Testing App Name
-    name: Testing App Name - Android
-
-#    platformName: iOS
-#    udid: F40C4AA5-07D4-46B2-BD02-5DE1871C0FF6
-#    automationName: XCUITest
-#    noReset: true
-#    bundleId: com.getvymo.ios.enterprise
-#    appium:settings[snapshotMaxDepth]: 60
-#    appium:settings[pageSourceExcludedAttributes]: "visible,accessible"
-##    appium:webDriverAgentUrl: http://192.168.1.15:8100
-#    isRealDevice: false
-
-#    platformName: iOS
-#    udid: 00008101-000A29E00C09001E
-#    automationName: XCUITest
-#    noReset: false
-#    bundleId: com.getvymo.ios.enterprise
-#    appium:settings[snapshotMaxDepth]: 60
-#    appium:settings[pageSourceExcludedAttributes]: "visible,accessible"
-#    appium:webDriverAgentUrl: http://192.168.1.15:8100
-#    isRealDevice: true
+    androidLocalDevice:
+    #    platformName: Android
+    #    udid: emulator-5554
+    #    automationName: UiAutomator2
+    #    noReset: false
+    #    appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
+    #    appium:appPackage: com.getvymo.android.debug
+    #    appium:optionalIntentArguments: -e appiumTest true
+    #    appium:autoGrantPermissions: true
+    #    app: lt://APP10160201161750415149305925
+    #    isRealMobile: true
+    androidLambdaTestCloud:
+      platformName: Android
+      deviceName: "Oppo*"
+      automationName: UiAutomator2
+      noReset: false
+      appium:appActivity: in.vymo.android.base.splashRoute.SplashRouterActivity
+      appium:appPackage: com.getvymo.android
+      appium:optionalIntentArguments: -e appiumTest true
+      appium:autoGrantPermissions: true
+      app: lt://APP10160261801751510373072641
+      isRealMobile: true
+      # change this setting from here.
+      build: Testing App Name
+      name: Testing App Name - Android
+#
+#      platformName: iOS
+#      udid: F40C4AA5-07D4-46B2-BD02-5DE1871C0FF6
+#      automationName: XCUITest
+#      noReset: true
+#      bundleId: com.getvymo.ios.enterprise
+#      appium:settings[snapshotMaxDepth]: 60
+#      appium:settings[pageSourceExcludedAttributes]: "visible,accessible"
+#      #    appium:webDriverAgentUrl: http://192.168.1.15:8100
+#      isRealDevice: false
+#
+#      platformName: iOS
+#      udid: 00008101-000A29E00C09001E
+#      automationName: XCUITest
+#      noReset: false
+#      bundleId: com.getvymo.ios.enterprise
+#      appium:settings[snapshotMaxDepth]: 60
+#      appium:settings[pageSourceExcludedAttributes]: "visible,accessible"
+#      appium:webDriverAgentUrl: http://192.168.1.15:8100
+#      isRealDevice: true

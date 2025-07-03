@@ -54,6 +54,7 @@ data class WorkspaceConfig(
     }
 
     data class AppiumConfiguration(
+        // try to move the user, key, hostname, port, protocol, path to a cli options
         val user: String?,
         val key: String?,
         val hostname: String = "localhost",
@@ -61,7 +62,7 @@ data class WorkspaceConfig(
         val protocol: Protocol,
         val path: String = "/wd/hub",
         val runnerType: RunnerType = RunnerType.LOCAL,
-        val capabilities: Map<String, Any> = emptyMap(),
+        val capabilities: Map<String, Map<String, Any>> = emptyMap(),
     ) {
     }
 
