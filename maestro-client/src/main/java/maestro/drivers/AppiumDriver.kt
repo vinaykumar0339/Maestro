@@ -135,6 +135,7 @@ class AppiumDriver(
             // Update the capability by setting noReset = false
             val updatedCapabilities = capabilities.toMutableMap()
             updatedCapabilities["noReset"] = false
+            updatedCapabilities["appium:noReset"] = false
             capabilities = updatedCapabilities
         }
     }

@@ -1,7 +1,8 @@
-appId: com.getvymo.android
+appId: com.getvymo.android.debug
 ---
 - launchApp:
     stopApp: false
+    clearState: true
     arguments:
       appiumTest: "true"
 - tapOn: Email Format / Invite Code
@@ -25,7 +26,7 @@ appId: com.getvymo.android
 #      below:
 #        text: "Quick Updates"
     direction: DOWN # DOWN|UP|LEFT|RIGHT (optional, default: DOWN)
-    timeout: 100000 # (optional, default: 20000) ms
+    timeout: 5000 # (optional, default: 20000) ms
     speed: 40 # 0-100 (optional, default: 40) Scroll speed. Higher values scroll faster.
     visibilityPercentage: 100 # 0-100 (optional, default: 100) Percentage of element visible in viewport
     centerElement: false # true|false (optional, default: false)
