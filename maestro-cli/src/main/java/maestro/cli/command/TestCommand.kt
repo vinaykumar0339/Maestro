@@ -19,6 +19,8 @@
 
 package maestro.cli.command
 
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -188,6 +190,90 @@ class TestCommand : Callable<Int> {
     )
     private var appleTeamId: String? = null
 
+    @Option(
+        names = ["--appium"],
+        description = ["Use Appium to run the tests. This is useful for running tests on real devices or when you need advanced Appium features."],
+        hidden = true
+    )
+    private var appium: Boolean = false
+
+    @Option(
+        names = ["--appium-device-name"],
+        description = ["The name of the device to use with Appium. If not provided, it will use from the capabilities"],
+        hidden = true
+    )
+    private var appiumDeviceName: String? = null
+
+    @Option(
+        names = ["--appium-udid"],
+        description = ["The UDID of the device to use with Appium. If not provided, it will use from the capabilities"],
+        hidden = true
+    )
+    private var appiumUdid: String? = null
+
+    @Option(
+        names = ["--appium-capabilityKey"],
+        description = ["The key of the capability config to use with Appium. This is required when --appium is set to true."],
+    )
+    private var appiumCapabilityKey: String? = null
+
+    @Option(
+        names = ["--appium-hostname"],
+        description = ["The hostname of the Appium server. Defaults to 'localhost'."],
+        hidden = true
+    )
+    private var appiumHostname: String = "localhost"
+
+    @Option(
+        names = ["--appium-port"],
+        description = ["The port of the Appium server. Defaults to 4723."],
+        hidden = true
+    )
+    private var appiumPort: Int = 4723
+
+    @Option(
+        names = ["--appium-path"],
+        description = ["The path to the Appium server. Defaults to '/wd/hub'."],
+        hidden = true
+    )
+    private var appiumPath: String = "/wd/hub"
+
+    @Option(
+        names = ["--appium-protocol"],
+        description = ["The protocol to use with Appium. Defaults to 'http'."],
+        hidden = true
+    )
+    private var appiumProtocol: String = Protocol.HTTP.scheme
+
+    private val appiumProtocolEnum: Protocol
+        get() = Protocol.getByName(appiumProtocol)
+            ?: error("Invalid Appium protocol: $appiumProtocol. Supported protocols are: ${Protocol.values().joinToString(", ") { it.scheme }}")
+
+    @Option(
+        names = ["--appium-user"],
+        description = ["The username for the Appium server. This is required when you want to connect to cloud Appium services like BrowserStack or Sauce Labs."],
+        hidden = true
+    )
+    private var appiumUser: String? = null
+
+    @Option(
+        names = ["--appium-key"],
+        description = ["The access key for the Appium server. This is required when you want to connect to cloud Appium services like BrowserStack or Sauce Labs."],
+        hidden = true
+    )
+    private var appiumKey: String? = null
+
+    @Option(
+        names = ["--appium-runner-type"],
+        description = ["The type of Appium runner to use. Defaults to 'local'. Supported values: 'local', 'browserstack', 'saucelabs', 'lambdatest'."],
+        hidden = true
+    )
+    private var appiumRunnerType: String = "local"
+
+    private val appiumRunnerTypeEnum: RunnerType
+        get() = RunnerType.getByName(appiumRunnerType)
+            ?: error("Invalid Appium runner type: $appiumRunnerType. Supported types are: ${RunnerType.values().joinToString(", ") { it.name }}")
+
     @CommandLine.Spec
     lateinit var commandSpec: CommandLine.Model.CommandSpec
 
@@ -241,6 +327,9 @@ class TestCommand : Callable<Int> {
     }
 
     private fun handleSessions(debugOutputPath: Path, plan: ExecutionPlan): Int = runBlocking(Dispatchers.IO) {
+        if (appium && appiumCapabilityKey.isNullOrBlank()) {
+            throw CliError("When using Appium, you must specify the --appium-capabilityKey option to select the desired capability configuration.")
+        }
         val requestedShards = shardSplit ?: shardAll ?: 1
         if (requestedShards > 1 && plan.sequence.flows.isNotEmpty()) {
             error("Cannot run sharded tests with sequential execution")
@@ -266,7 +355,7 @@ class TestCommand : Callable<Int> {
             .toList()
 
         val missingDevices = requestedShards - deviceIds.size
-        if (missingDevices > 0) {
+        if (missingDevices > 0 && !appium) { // No Need to check for device availability if using Appium Driver
             PrintUtils.warn("Want to use ${deviceIds.size} devices, which is not enough to run $requestedShards shards. Missing $missingDevices device(s).")
             throw CliError("Not enough devices connected ($missingDevices) to run the requested number of shards ($requestedShards).")
         }
@@ -334,7 +423,7 @@ class TestCommand : Callable<Int> {
         debugOutputPath: Path,
     ): Triple<Int?, Int?, TestExecutionSummary?> {
         val driverHostPort = selectPort(effectiveShards)
-        val deviceId = deviceIds[shardIndex]
+        val deviceId = deviceIds.getOrNull(shardIndex) ?: ""
         val executionPlan = chunkPlans[shardIndex]
 
         logger.info("[shard ${shardIndex + 1}] Selected device $deviceId using port $driverHostPort with execution plan $executionPlan")
@@ -348,7 +437,18 @@ class TestCommand : Callable<Int> {
             platform = parent?.platform,
             isHeadless = headless,
             reinstallDriver = reinstallDriver,
-            executionPlan = executionPlan
+            executionPlan = executionPlan,
+            appiumTests = appium,
+            appiumUdid = appiumUdid,
+            appiumDeviceName = appiumDeviceName,
+            appiumCapabilityKey = appiumCapabilityKey,
+            appiumHostname = appiumHostname,
+            appiumProtocol = appiumProtocolEnum,
+            appiumPort = appiumPort,
+            appiumPath = appiumPath,
+            appiumKey = appiumKey,
+            appiumUser = appiumUser,
+            appiumRunnerTypeEnum = appiumRunnerTypeEnum,
         ) { session ->
             val maestro = session.maestro
             val device = session.device

@@ -57,6 +57,7 @@ kotlinx-html = "0.8.0"
 clikt = "4.2.2"
 gmsLocation = "21.3.0"
 mcpKotlinSdk = "steviec/kotlin-1.8"  # Git branch name
+appium-java-client = "9.4.0"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -135,6 +136,7 @@ wiremock-jre8 = { module = "com.github.tomakehurst:wiremock-jre8", version.ref =
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 gmsLocation = { module = "com.google.android.gms:play-services-location", version.ref = "gmsLocation" }
 mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk" }
+appium-java-client = { module = "io.appium:java-client", version.ref = "appium-java-client" }
 
 [bundles]
 
