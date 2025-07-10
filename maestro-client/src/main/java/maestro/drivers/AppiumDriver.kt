@@ -546,7 +546,7 @@ class AppiumDriver(
     }
 
     override fun isUnicodeInputSupported(): Boolean {
-        return !maestroAppiumDriver.isAndroid()
+        return true // Appium supports Unicode input so return true there is a check in maestro codebase where they won't support unicode and throws an error.
     }
 
     override fun waitUntilScreenIsStatic(timeoutMs: Long): Boolean {
