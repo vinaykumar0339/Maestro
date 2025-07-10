@@ -1,0 +1,47 @@
+appId: com.getvymo.android.debug
+---
+- launchApp:
+    stopApp: false
+    clearState: true
+    arguments:
+      appiumTest: "true"
+- tapOn: Email Format / Invite Code
+- inputText: jointsales@agency.com
+- tapOn: Next
+- tapOn: Password
+- inputText: vymo2013
+- tapOn: Login
+- addMedia:
+    - "/Users/vinaykumar/Downloads/testimage.jpg"
+#- pressKey: Home
+#- tapOn:
+#    id: hamburger-tab
+- tapOn: Hello
+- scrollUntilVisible:
+    element:
+      id: "card-view-all-button-Advisors"
+#      text: "View All " # or any other selector
+#      rightOf:
+#        text: "Advisors"
+#      below:
+#        text: "Quick Updates"
+    direction: DOWN # DOWN|UP|LEFT|RIGHT (optional, default: DOWN)
+    timeout: 5000 # (optional, default: 20000) ms
+    speed: 40 # 0-100 (optional, default: 40) Scroll speed. Higher values scroll faster.
+    visibilityPercentage: 100 # 0-100 (optional, default: 100) Percentage of element visible in viewport
+    centerElement: false # true|false (optional, default: false)
+- tapOn:
+    id: "card-view-all-button-Advisors"
+#    text: "View All "
+#    rightOf:
+#      text: "Advisors"
+#    below:
+#      text: "Quick Updates"
+#- tapOn:
+#      id: appium_date_edit_field
+#- inputText: "1751228741068"
+#- copyTextFrom:
+#    id: appium_date_edit_field
+#- assertVisible:
+#    id: appium_date_edit_field
+#    text: "^${maestro.copiedText}$"

@@ -19,6 +19,8 @@
 
 package maestro.cli.session
 
+import com.getvymo.appium.Protocol
+import com.getvymo.appium.RunnerType
 import dadb.Dadb
 import dadb.adbserver.AdbServer
 import ios.LocalIOSDevice
@@ -35,7 +37,9 @@ import maestro.device.Platform
 import maestro.utils.CliInsights
 import maestro.cli.util.ScreenReporter
 import maestro.drivers.AndroidDriver
+import maestro.drivers.AppiumDriver
 import maestro.drivers.IOSDriver
+import maestro.orchestra.WorkspaceConfig
 import maestro.orchestra.WorkspaceConfig.PlatformConfiguration
 import maestro.orchestra.workspace.WorkspaceExecutionPlanner
 import org.slf4j.LoggerFactory
@@ -61,20 +65,18 @@ object MaestroSessionManager {
     private val executor = Executors.newScheduledThreadPool(1)
     private val logger = LoggerFactory.getLogger(MaestroSessionManager::class.java)
 
-
-    fun <T> newSession(
-        host: String?,
-        port: Int?,
-        driverHostPort: Int?,
-        deviceId: String?,
-        teamId: String? = null,
-        platform: String? = null,
-        isStudio: Boolean = false,
-        isHeadless: Boolean = isStudio,
-        reinstallDriver: Boolean = true,
-        deviceIndex: Int? = null,
-        executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
-        block: (MaestroSession) -> T,
+    private fun <T> handleSessionForNativeMaestro(host: String?,
+                                              port: Int?,
+                                              driverHostPort: Int?,
+                                              deviceId: String?,
+                                              teamId: String? = null,
+                                              platform: String? = null,
+                                              isStudio: Boolean = false,
+                                              isHeadless: Boolean = isStudio,
+                                              reinstallDriver: Boolean = true,
+                                              deviceIndex: Int? = null,
+                                              executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
+                                              block: (MaestroSession) -> T,
     ): T {
         val selectedDevice = selectDevice(
             host = host,
@@ -127,6 +129,133 @@ object MaestroSessionManager {
         })
 
         return block(session)
+    }
+
+    private fun <T> handleSessionForAppiumMaestro(
+        appiumDeviceName: String?,
+        appiumUdid: String?,
+        appiumCapabilityKey: String?,
+        appiumHostname: String = "localhost",
+        appiumPort: Int = 4723,
+        appiumPath: String = "/wd/hub",
+        appiumProtocol: Protocol = Protocol.HTTP,
+        appiumUser: String? = null,
+        appiumKey: String? = null,
+        appiumRunnerTypeEnum: RunnerType = RunnerType.LOCAL,
+        appiumConfiguration: WorkspaceConfig.AppiumConfiguration,
+        block: (MaestroSession) -> T
+    ): T {
+
+        val capabilities = appiumConfiguration.capabilities[appiumCapabilityKey ?: "default"]?.toMutableMap()
+            ?: error("Appium capabilities for key '$appiumCapabilityKey' not found in the configuration.")
+
+        if (!appiumDeviceName.isNullOrEmpty()) {
+            capabilities.apply {
+                set("deviceName", appiumDeviceName)
+                set("appium:deviceName", appiumDeviceName)
+            }
+        }
+
+        if (!appiumUdid.isNullOrEmpty()) {
+            capabilities.apply {
+                set("udid", appiumUdid)
+                set("appium:udid", appiumUdid)
+            }
+        }
+
+        val deviceId = (capabilities["udid"]
+            ?: capabilities["appium:udid"]
+            ?: capabilities["deviceName"]
+            ?: "") as String
+        val maestro = Maestro.appium(
+            driver = AppiumDriver(
+                deviceId = deviceId,
+                user = appiumUser,
+                key = appiumKey,
+                hostname = appiumHostname,
+                port = appiumPort,
+                runnerType = appiumRunnerTypeEnum,
+                protocol = appiumProtocol,
+                path = appiumPath,
+                capabilities = capabilities
+            ),
+            openDriver = true
+        )
+        val session = MaestroSession(
+            maestro = maestro,
+        )
+
+        Runtime.getRuntime().addShutdownHook(thread(start = false) {
+            runCatching { ScreenReporter.reportMaxDepth() }
+            if (SessionStore.activeSessions().isEmpty()) {
+                session.close()
+            }
+        })
+
+        return block(session)
+    }
+
+
+    fun <T> newSession(
+        host: String?,
+        port: Int?,
+        driverHostPort: Int?,
+        deviceId: String?,
+        teamId: String? = null,
+        platform: String? = null,
+        isStudio: Boolean = false,
+        isHeadless: Boolean = isStudio,
+        reinstallDriver: Boolean = true,
+        deviceIndex: Int? = null,
+        executionPlan: WorkspaceExecutionPlanner.ExecutionPlan? = null,
+        appiumTests: Boolean = false,
+        appiumDeviceName: String? = null,
+        appiumUdid: String? = null,
+        appiumCapabilityKey: String? = null,
+        appiumHostname: String = "localhost",
+        appiumPort: Int = 4723,
+        appiumPath: String = "/wd/hub",
+        appiumProtocol: Protocol = Protocol.HTTP,
+        appiumUser: String? = null,
+        appiumKey: String? = null,
+        appiumRunnerTypeEnum: RunnerType = RunnerType.LOCAL,
+        block: (MaestroSession) -> T,
+    ): T {
+        if (appiumTests) {
+            executionPlan?.workspaceConfig?.appiumConfiguration?.let {
+                return handleSessionForAppiumMaestro(
+                    appiumDeviceName,
+                    appiumUdid,
+                    appiumCapabilityKey,
+                    appiumConfiguration = it,
+                    appiumHostname = appiumHostname,
+                    appiumPort = appiumPort,
+                    appiumProtocol = appiumProtocol,
+                    appiumUser = appiumUser,
+                    appiumKey = appiumKey,
+                    appiumPath = appiumPath,
+                    appiumRunnerTypeEnum = appiumRunnerTypeEnum,
+                    block = block
+                )
+            } ?: run {
+                throw RuntimeException("Appium configuration is required for Appium tests. Please provide a valid Appium configuration in the workspace config.")
+            }
+        } else {
+            return handleSessionForNativeMaestro(
+                host = host,
+                port = port,
+                driverHostPort = driverHostPort,
+                deviceId = deviceId,
+                teamId = teamId,
+                platform = platform,
+                isStudio = isStudio,
+                isHeadless = isHeadless,
+                reinstallDriver = reinstallDriver,
+                deviceIndex = deviceIndex,
+                executionPlan = executionPlan,
+                block = block
+            )
+        }
     }
 
     private fun selectDevice(
